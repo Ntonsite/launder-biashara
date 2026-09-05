@@ -1,0 +1,113 @@
+{
+  "nav": {
+    "find": "Tafuta Laundry",
+    "how": "Jinsi inavyofanya kazi",
+    "business": "Kwa biashara",
+    "pricing": "Bei",
+    "signin": "Ingia"
+  },
+  "hero": {
+    "eyebrow": "Siku rahisi zaidi ya kufua Dar es Salaam",
+    "title": "Huduma ya kufua, kwa urahisi.",
+    "body": "Pata laundry zinazoaminika karibu nawe, agiza mtandaoni na usafishe nguo kwa njia yako.",
+    "location": "Weka eneo lako, mfano Mikocheni",
+    "search": "Tafuta Laundry",
+    "trusted": "Laundry za karibu zilizothibitishwa",
+    "payments": "Malipo salama kwa simu",
+    "pickup": "Tunachukua au unaleta"
+  },
+  "home": {
+    "popular": "Laundry zinazopendwa karibu nawe",
+    "popularSub": "Huduma ya kuaminika, bei wazi, ndani ya mtaa wako.",
+    "steps": "Nguo safi kwa hatua tatu rahisi",
+    "discover": "Chagua laundry yako",
+    "discoverText": "Linganisha laundry za karibu, huduma na maoni ya wateja.",
+    "book": "Agiza unavyotaka",
+    "bookText": "Chagua kuchukuliwa au kupeleka, kisha lipa taslimu au kwa simu.",
+    "track": "Fuatilia kila hatua",
+    "trackText": "Ona nguo zinapofuliwa, zikiwa tayari na zikirudi nyumbani.",
+    "bizTitle": "Biashara yako ya laundry, imepangwa vizuri.",
+    "bizText": "Simamia oda, wateja, malipo na duka lako kutoka sehemu moja tulivu.",
+    "start": "Anza na Launder Business",
+    "cta": "Uko tayari kwa siku nyepesi ya kufua?",
+    "ctaSub": "Gundua huduma bora za laundry Dar es Salaam."
+  },
+  "common": {
+    "from": "Kuanzia",
+    "view": "Tazama laundry",
+    "open": "Wazi",
+    "closed": "Imefungwa",
+    "pickup": "Huduma ya kuchukua",
+    "rating": "ukadiriaji",
+    "back": "Rudi",
+    "total": "Jumla",
+    "continue": "Endelea",
+    "empty": "Hakuna chochote bado"
+  },
+  "market": {
+    "title": "Tafuta laundry yako",
+    "sub": "Huduma bora za kufua karibu na Dar es Salaam.",
+    "search": "Tafuta laundry au eneo",
+    "all": "Huduma zote",
+    "nearby": "Karibu",
+    "filters": "Chuja",
+    "results": "laundry karibu nawe"
+  },
+  "store": {
+    "services": "Huduma na bei",
+    "about": "Kwa nini wenyeji wanatuchagua",
+    "hours": "Saa za kazi",
+    "add": "Ongeza",
+    "cart": "Kikapu chako",
+    "checkout": "Endelea kulipa",
+    "turnaround": "muda wa kukamilika"
+  },
+  "checkout": {
+    "title": "Karibu kuwa safi",
+    "contact": "Maelezo yako",
+    "name": "Jina kamili",
+    "phone": "Namba ya simu",
+    "fulfillment": "Tutapokeaje nguo zako?",
+    "address": "Anwani ya kuchukua",
+    "time": "Muda unaopendelea",
+    "payment": "Njia ya malipo",
+    "cash": "Taslimu",
+    "mobile": "Pesa kwa simu",
+    "place": "Weka oda",
+    "success": "Oda imethibitishwa!",
+    "successText": "Tumetuma oda yako kwa laundry. Unaweza kufuatilia kila hatua."
+  },
+  "orders": {
+    "title": "Oda zako",
+    "track": "Fuatilia oda",
+    "reorder": "Agiza tena",
+    "received": "Oda imepokelewa",
+    "washing": "Inafuliwa",
+    "drying": "Inakaushwa",
+    "ironing": "Inapigwa pasi",
+    "quality": "Ukaguzi wa ubora",
+    "ready": "Tayari",
+    "delivery": "Njiani kuletwa",
+    "delivered": "Imefikishwa"
+  },
+  "dashboard": {
+    "greeting": "Habari za mchana, Asha",
+    "sub": "Hivi ndivyo T-Laundry inavyoendelea leo.",
+    "today": "Oda za leo",
+    "revenue": "Mapato ya leo",
+    "ready": "Tayari kuchukuliwa",
+    "outstanding": "Malipo yanayodaiwa",
+    "recent": "Oda za hivi karibuni",
+    "newOrder": "Oda mpya ya dukani",
+    "customers": "Wateja",
+    "services": "Huduma",
+    "marketplace": "Soko"
+  },
+  "footer": {
+    "tagline": "Nguo safi. Akili tulivu. Karibu Launder.",
+    "product": "Bidhaa",
+    "company": "Kampuni",
+    "support": "Msaada",
+    "rights": "Imetengenezwa kwa upendo Tanzania."
+  }
+}

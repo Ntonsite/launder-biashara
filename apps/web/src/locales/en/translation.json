@@ -1,0 +1,113 @@
+{
+  "nav": {
+    "find": "Find a Laundry",
+    "how": "How it works",
+    "business": "For businesses",
+    "pricing": "Pricing",
+    "signin": "Sign in"
+  },
+  "hero": {
+    "eyebrow": "Dar es Salaam's easiest laundry day",
+    "title": "Laundry day, made simple.",
+    "body": "Find trusted laundries near you, order online and get your clothes cleaned your way.",
+    "location": "Enter your area, e.g. Mikocheni",
+    "search": "Find a Laundry",
+    "trusted": "Verified local laundries",
+    "payments": "Secure mobile payments",
+    "pickup": "Pickup or drop-off"
+  },
+  "home": {
+    "popular": "Loved laundries near you",
+    "popularSub": "Trusted care, transparent prices, right in your neighbourhood.",
+    "steps": "Fresh clothes in three simple steps",
+    "discover": "Choose your laundry",
+    "discoverText": "Compare trusted local laundries, services and real customer reviews.",
+    "book": "Book your way",
+    "bookText": "Choose pickup or drop off, then pay by cash or mobile money.",
+    "track": "Follow every step",
+    "trackText": "See when your clothes are washing, ready and on their way home.",
+    "bizTitle": "Your laundry business, beautifully organised.",
+    "bizText": "Manage orders, customers, payments and your marketplace storefront from one calm workspace.",
+    "start": "Start with Launder Business",
+    "cta": "Ready for a lighter laundry day?",
+    "ctaSub": "Discover trusted laundry care around Dar es Salaam."
+  },
+  "common": {
+    "from": "From",
+    "view": "View laundry",
+    "open": "Open",
+    "closed": "Closed",
+    "pickup": "Pickup available",
+    "rating": "rating",
+    "back": "Back",
+    "total": "Total",
+    "continue": "Continue",
+    "empty": "Nothing here yet"
+  },
+  "market": {
+    "title": "Find your laundry",
+    "sub": "Quality laundry care around Dar es Salaam.",
+    "search": "Search laundries or neighbourhoods",
+    "all": "All services",
+    "nearby": "Nearby",
+    "filters": "Filters",
+    "results": "laundries near you"
+  },
+  "store": {
+    "services": "Services & prices",
+    "about": "Why locals choose us",
+    "hours": "Opening hours",
+    "add": "Add",
+    "cart": "Your basket",
+    "checkout": "Checkout",
+    "turnaround": "turnaround"
+  },
+  "checkout": {
+    "title": "Almost fresh",
+    "contact": "Your details",
+    "name": "Full name",
+    "phone": "Phone number",
+    "fulfillment": "How should we receive your clothes?",
+    "address": "Pickup address",
+    "time": "Preferred pickup time",
+    "payment": "Payment method",
+    "cash": "Cash",
+    "mobile": "Mobile money",
+    "place": "Place order",
+    "success": "Order confirmed!",
+    "successText": "We've sent your order to the laundry. You can follow every step."
+  },
+  "orders": {
+    "title": "Your orders",
+    "track": "Track order",
+    "reorder": "Reorder",
+    "received": "Order received",
+    "washing": "Washing",
+    "drying": "Drying",
+    "ironing": "Ironing",
+    "quality": "Quality check",
+    "ready": "Ready",
+    "delivery": "Out for delivery",
+    "delivered": "Delivered"
+  },
+  "dashboard": {
+    "greeting": "Good afternoon, Asha",
+    "sub": "Here's how T-Laundry is doing today.",
+    "today": "Today's orders",
+    "revenue": "Today's revenue",
+    "ready": "Ready for collection",
+    "outstanding": "Outstanding",
+    "recent": "Recent orders",
+    "newOrder": "New walk-in order",
+    "customers": "Customers",
+    "services": "Services",
+    "marketplace": "Marketplace"
+  },
+  "footer": {
+    "tagline": "Clean clothes. Clear mind. Karibu Launder.",
+    "product": "Product",
+    "company": "Company",
+    "support": "Support",
+    "rights": "Made with care in Tanzania."
+  }
+}

@@ -1,0 +1,17 @@
+docs/
+node_modules/
+dist/
+build/
+*.tsbuildinfo
+__pycache__/
+*.py[cod]
+.pytest_cache/
+*.db
+.env
+.env.*
+!.env.example
+.vite/
+.coverage
+htmlcov/
+.DS_Store
+Thumbs.db

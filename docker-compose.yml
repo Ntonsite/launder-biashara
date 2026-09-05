@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgis/postgis:16-3.4
+    environment: {POSTGRES_DB: launder, POSTGRES_USER: launder, POSTGRES_PASSWORD: launder_dev}
+    volumes: [postgres_data:/var/lib/postgresql/data]
+    healthcheck: {test: [CMD-SHELL, pg_isready -U launder], interval: 5s, timeout: 5s, retries: 10}
+  redis: {image: redis:7-alpine}
+  api:
+    build: ./apps/api
+    ports: ["8000:8000"]
+    depends_on: {postgres: {condition: service_healthy}}
+  web:
+    build: ./apps/web
+    ports: ["5173:80"]
+    depends_on: [api]
+volumes: {postgres_data: {}}
