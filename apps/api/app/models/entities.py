@@ -1,28 +1,326 @@
-from datetime import datetime, timezone
+"""Persistence model.
+
+Money: Tanzanian shillings have no minor unit in practice, so every amount is stored as an exact integer number of
+TZS. Rates and fractional quantities (kg) use Numeric and are combined with Decimal arithmetic; nothing monetary
+ever passes through a float.
+"""
+from datetime import UTC, datetime
+from decimal import Decimal
 from uuid import uuid4
-from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Integer, String
-from sqlalchemy.orm import Mapped, mapped_column
+
+from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Index, Integer, Numeric, String, Text, UniqueConstraint
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
 from ..database import Base
 
-def uuid(): return str(uuid4())
-def utcnow(): return datetime.now(timezone.utc)
+
+def uuid() -> str:
+    return str(uuid4())
+
+
+def utcnow() -> datetime:
+    return datetime.now(UTC)
+
+
 class User(Base):
-    __tablename__="users"; id:Mapped[str]=mapped_column(String,primary_key=True,default=uuid); email:Mapped[str]=mapped_column(String,unique=True,index=True); password_hash:Mapped[str]=mapped_column(String); full_name:Mapped[str]=mapped_column(String); role:Mapped[str]=mapped_column(String,index=True); active:Mapped[bool]=mapped_column(Boolean,default=True); language:Mapped[str]=mapped_column(String,default="en")
+    __tablename__ = "users"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uuid)
+    email: Mapped[str | None] = mapped_column(String(255), unique=True, index=True)
+    phone: Mapped[str | None] = mapped_column(String(20), unique=True, index=True)
+    password_hash: Mapped[str | None] = mapped_column(String(255))
+    full_name: Mapped[str] = mapped_column(String(120), default="")
+    # SUPER_ADMIN, ADMIN, BUSINESS_OWNER, BRANCH_MANAGER, STAFF, CUSTOMER
+    role: Mapped[str] = mapped_column(String(20), index=True)
+    # Staff and managers belong to a business; owners are linked through Business.owner_id.
+    business_id: Mapped[str | None] = mapped_column(ForeignKey("businesses.id", use_alter=True, name="fk_users_business"), index=True)
+    active: Mapped[bool] = mapped_column(Boolean, default=True)
+    language: Mapped[str] = mapped_column(String(2), default="en")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class RefreshToken(Base):
+    __tablename__ = "refresh_tokens"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uuid)
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    token_hash: Mapped[str] = mapped_column(String(64), unique=True)
+    # All tokens issued from one login share a family; reuse of a rotated token revokes the family.
+    family_id: Mapped[str] = mapped_column(String(36), index=True)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class OtpChallenge(Base):
+    __tablename__ = "otp_challenges"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uuid)
+    phone: Mapped[str] = mapped_column(String(20), index=True)
+    code_hash: Mapped[str] = mapped_column(String(64))
+    attempts: Mapped[int] = mapped_column(Integer, default=0)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    consumed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
 class Business(Base):
-    __tablename__="businesses"; id:Mapped[str]=mapped_column(String,primary_key=True,default=uuid); owner_id:Mapped[str]=mapped_column(ForeignKey("users.id")); name:Mapped[str]=mapped_column(String); slug:Mapped[str]=mapped_column(String,unique=True,index=True); area:Mapped[str]=mapped_column(String); status:Mapped[str]=mapped_column(String,default="ACTIVE"); verification_status:Mapped[str]=mapped_column(String,default="VERIFIED"); latitude:Mapped[float]=mapped_column(Float); longitude:Mapped[float]=mapped_column(Float); rating:Mapped[float]=mapped_column(Float,default=0); pickup_enabled:Mapped[bool]=mapped_column(Boolean,default=False); created_at:Mapped[datetime]=mapped_column(DateTime(timezone=True),default=utcnow)
+    __tablename__ = "businesses"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uuid)
+    owner_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True)
+    name: Mapped[str] = mapped_column(String(160))
+    slug: Mapped[str] = mapped_column(String(180), unique=True, index=True)
+    description: Mapped[str] = mapped_column(Text, default="")
+    phone: Mapped[str] = mapped_column(String(20), default="")
+    address: Mapped[str] = mapped_column(String(255), default="")
+    area: Mapped[str] = mapped_column(String(80))
+    city: Mapped[str] = mapped_column(String(80), default="Dar es Salaam")
+    status: Mapped[str] = mapped_column(String(20), default="ACTIVE")
+    verification_status: Mapped[str] = mapped_column(String(20), default="UNVERIFIED")
+    latitude: Mapped[float | None] = mapped_column(Float)
+    longitude: Mapped[float | None] = mapped_column(Float)
+    # Maintained from published reviews by ReviewService; never written by clients.
+    rating: Mapped[Decimal] = mapped_column(Numeric(3, 2), default=Decimal("0"))
+    review_count: Mapped[int] = mapped_column(Integer, default=0)
+    pickup_enabled: Mapped[bool] = mapped_column(Boolean, default=False)
+    pickup_fee: Mapped[int] = mapped_column(Integer, default=0)
+    cover_image_url: Mapped[str | None] = mapped_column(String(500))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    hours: Mapped[list["BusinessHours"]] = relationship(order_by="BusinessHours.weekday", cascade="all, delete-orphan")
+    marketplace: Mapped["MarketplaceAccount | None"] = relationship(uselist=False, viewonly=True)
+
+
+class BusinessHours(Base):
+    __tablename__ = "business_hours"
+    __table_args__ = (UniqueConstraint("business_id", "weekday"),)
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uuid)
+    business_id: Mapped[str] = mapped_column(ForeignKey("businesses.id", ondelete="CASCADE"), index=True)
+    weekday: Mapped[int] = mapped_column(Integer)  # 0 = Monday
+    opens_at: Mapped[str] = mapped_column(String(5), default="08:00")  # HH:MM local time, lexically comparable
+    closes_at: Mapped[str] = mapped_column(String(5), default="18:00")
+    closed: Mapped[bool] = mapped_column(Boolean, default=False)
+
+
 class Branch(Base):
-    __tablename__="branches"; id:Mapped[str]=mapped_column(String,primary_key=True,default=uuid); business_id:Mapped[str]=mapped_column(ForeignKey("businesses.id"),index=True); name:Mapped[str]=mapped_column(String); address:Mapped[str]=mapped_column(String); city:Mapped[str]=mapped_column(String,default="Dar es Salaam"); region:Mapped[str]=mapped_column(String,default="Dar es Salaam"); phone:Mapped[str]=mapped_column(String); latitude:Mapped[float]=mapped_column(Float); longitude:Mapped[float]=mapped_column(Float); active:Mapped[bool]=mapped_column(Boolean,default=True)
+    __tablename__ = "branches"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uuid)
+    business_id: Mapped[str] = mapped_column(ForeignKey("businesses.id"), index=True)
+    name: Mapped[str] = mapped_column(String(120))
+    address: Mapped[str] = mapped_column(String(255))
+    city: Mapped[str] = mapped_column(String(80), default="Dar es Salaam")
+    region: Mapped[str] = mapped_column(String(80), default="Dar es Salaam")
+    phone: Mapped[str] = mapped_column(String(20))
+    latitude: Mapped[float | None] = mapped_column(Float)
+    longitude: Mapped[float | None] = mapped_column(Float)
+    active: Mapped[bool] = mapped_column(Boolean, default=True)
+
+
 class BusinessOnboarding(Base):
-    __tablename__="business_onboarding"; id:Mapped[str]=mapped_column(String,primary_key=True,default=uuid); business_id:Mapped[str]=mapped_column(ForeignKey("businesses.id"),unique=True,index=True); current_step:Mapped[int]=mapped_column(Integer,default=1); data_json:Mapped[str]=mapped_column(String,default="{}"); completed:Mapped[bool]=mapped_column(Boolean,default=False); updated_at:Mapped[datetime]=mapped_column(DateTime(timezone=True),default=utcnow,onupdate=utcnow)
+    __tablename__ = "business_onboarding"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uuid)
+    business_id: Mapped[str] = mapped_column(ForeignKey("businesses.id"), unique=True, index=True)
+    current_step: Mapped[int] = mapped_column(Integer, default=1)
+    data_json: Mapped[str] = mapped_column(Text, default="{}")
+    completed: Mapped[bool] = mapped_column(Boolean, default=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, onupdate=utcnow)
+
+
 class Service(Base):
-    __tablename__="services"; id:Mapped[str]=mapped_column(String,primary_key=True,default=uuid); business_id:Mapped[str]=mapped_column(ForeignKey("businesses.id"),index=True); name:Mapped[str]=mapped_column(String); description:Mapped[str]=mapped_column(String,default=""); pricing_model:Mapped[str]=mapped_column(String,default="PER_ITEM"); price:Mapped[int]=mapped_column(Integer); turnaround_hours:Mapped[int]=mapped_column(Integer,default=24); active:Mapped[bool]=mapped_column(Boolean,default=True)
+    __tablename__ = "services"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uuid)
+    business_id: Mapped[str] = mapped_column(ForeignKey("businesses.id"), index=True)
+    name: Mapped[str] = mapped_column(String(120))
+    description: Mapped[str] = mapped_column(String(500), default="")
+    category: Mapped[str] = mapped_column(String(80), default="Wash & Iron")
+    pricing_model: Mapped[str] = mapped_column(String(10), default="PER_ITEM")  # PER_ITEM | PER_KG
+    price: Mapped[int] = mapped_column(Integer)  # TZS
+    turnaround_hours: Mapped[int] = mapped_column(Integer, default=24)
+    sort_order: Mapped[int] = mapped_column(Integer, default=0)
+    active: Mapped[bool] = mapped_column(Boolean, default=True)
+
+
 class MarketplaceAccount(Base):
-    __tablename__="marketplace_accounts"; id:Mapped[str]=mapped_column(String,primary_key=True,default=uuid); business_id:Mapped[str]=mapped_column(ForeignKey("businesses.id"),unique=True,index=True); status:Mapped[str]=mapped_column(String,index=True,default="NOT_ENROLLED"); commission_rate:Mapped[float]=mapped_column(Float,default=5); pickup_radius_km:Mapped[float]=mapped_column(Float,default=8); submitted_at:Mapped[datetime|None]=mapped_column(DateTime(timezone=True)); approved_at:Mapped[datetime|None]=mapped_column(DateTime(timezone=True)); rejection_reason:Mapped[str|None]=mapped_column(String)
+    __tablename__ = "marketplace_accounts"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uuid)
+    business_id: Mapped[str] = mapped_column(ForeignKey("businesses.id"), unique=True, index=True)
+    # NOT_ENROLLED → PENDING_REVIEW → ACTIVE | REJECTED;  ACTIVE ⇄ SUSPENDED;  REJECTED → PENDING_REVIEW
+    status: Mapped[str] = mapped_column(String(20), index=True, default="NOT_ENROLLED")
+    commission_rate: Mapped[Decimal] = mapped_column(Numeric(5, 2), default=Decimal("5.00"))
+    pickup_radius_km: Mapped[Decimal] = mapped_column(Numeric(5, 1), default=Decimal("8"))
+    contact_name: Mapped[str | None] = mapped_column(String(120))
+    registration_number: Mapped[str | None] = mapped_column(String(60))
+    tin: Mapped[str | None] = mapped_column(String(30))
+    submitted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    reviewed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    reviewed_by: Mapped[str | None] = mapped_column(String(36))
+    approved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    rejection_reason: Mapped[str | None] = mapped_column(String(500))
+    business: Mapped[Business] = relationship(viewonly=True)
+
+
 class Customer(Base):
-    __tablename__="customers"; id:Mapped[str]=mapped_column(String,primary_key=True,default=uuid); name:Mapped[str]=mapped_column(String,index=True); phone:Mapped[str]=mapped_column(String,unique=True,index=True); email:Mapped[str|None]=mapped_column(String)
+    """A business-facing customer record (CRM). Marketplace customers are additionally linked to a User."""
+    __tablename__ = "customers"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uuid)
+    user_id: Mapped[str | None] = mapped_column(ForeignKey("users.id"), unique=True, index=True)
+    name: Mapped[str] = mapped_column(String(120), index=True)
+    phone: Mapped[str] = mapped_column(String(20), unique=True, index=True)
+    email: Mapped[str | None] = mapped_column(String(255))
+
+
+class Address(Base):
+    __tablename__ = "addresses"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uuid)
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    label: Mapped[str] = mapped_column(String(40), default="Home")
+    line: Mapped[str] = mapped_column(String(255))
+    area: Mapped[str] = mapped_column(String(80), default="")
+    city: Mapped[str] = mapped_column(String(80), default="Dar es Salaam")
+    notes: Mapped[str] = mapped_column(String(255), default="")
+    latitude: Mapped[float | None] = mapped_column(Float)
+    longitude: Mapped[float | None] = mapped_column(Float)
+    is_default: Mapped[bool] = mapped_column(Boolean, default=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class Favourite(Base):
+    __tablename__ = "favourites"
+    __table_args__ = (UniqueConstraint("user_id", "business_id"),)
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uuid)
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    business_id: Mapped[str] = mapped_column(ForeignKey("businesses.id", ondelete="CASCADE"), index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
 class Order(Base):
-    __tablename__="orders"; id:Mapped[str]=mapped_column(String,primary_key=True,default=uuid); order_number:Mapped[str]=mapped_column(String,unique=True,index=True); business_id:Mapped[str]=mapped_column(ForeignKey("businesses.id"),index=True); customer_id:Mapped[str]=mapped_column(ForeignKey("customers.id")); source:Mapped[str]=mapped_column(String); status:Mapped[str]=mapped_column(String,index=True); payment_status:Mapped[str]=mapped_column(String,index=True,default="PENDING"); total:Mapped[int]=mapped_column(Integer); created_at:Mapped[datetime]=mapped_column(DateTime(timezone=True),default=utcnow)
+    __tablename__ = "orders"
+    __table_args__ = (
+        Index("ix_orders_business_created", "business_id", "created_at"),
+        UniqueConstraint("customer_id", "idempotency_key", name="uq_orders_customer_idempotency"),
+    )
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uuid)
+    order_number: Mapped[str] = mapped_column(String(20), unique=True, index=True)
+    business_id: Mapped[str] = mapped_column(ForeignKey("businesses.id"), index=True)
+    customer_id: Mapped[str] = mapped_column(ForeignKey("customers.id"), index=True)
+    source: Mapped[str] = mapped_column(String(20))  # MARKETPLACE | WALK_IN | PHONE | WHATSAPP
+    status: Mapped[str] = mapped_column(String(20), index=True)
+    fulfillment: Mapped[str] = mapped_column(String(10), default="DROP_OFF")  # PICKUP | DROP_OFF
+    pickup_address: Mapped[str | None] = mapped_column(String(255))
+    pickup_notes: Mapped[str | None] = mapped_column(String(255))
+    pickup_latitude: Mapped[float | None] = mapped_column(Float)
+    pickup_longitude: Mapped[float | None] = mapped_column(Float)
+    pickup_window_start: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    pickup_window_end: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    payment_method: Mapped[str] = mapped_column(String(15), default="CASH")  # CASH | MOBILE_MONEY
+    payment_status: Mapped[str] = mapped_column(String(12), index=True, default="PENDING")
+    subtotal: Mapped[int] = mapped_column(Integer, default=0)
+    delivery_fee: Mapped[int] = mapped_column(Integer, default=0)
+    total: Mapped[int] = mapped_column(Integer)
+    notes: Mapped[str] = mapped_column(String(500), default="")
+    idempotency_key: Mapped[str | None] = mapped_column(String(64))
+    cancel_reason: Mapped[str | None] = mapped_column(String(255))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, index=True)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, onupdate=utcnow)
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    items: Mapped[list["OrderItem"]] = relationship(cascade="all, delete-orphan", order_by="OrderItem.position")
+    events: Mapped[list["OrderStatusEvent"]] = relationship(cascade="all, delete-orphan", order_by="OrderStatusEvent.created_at")
+    business: Mapped[Business] = relationship(viewonly=True)
+    customer: Mapped[Customer] = relationship(viewonly=True)
+
+
+class OrderItem(Base):
+    """Prices are snapshotted at order time; the live Service row may change later."""
+    __tablename__ = "order_items"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uuid)
+    order_id: Mapped[str] = mapped_column(ForeignKey("orders.id", ondelete="CASCADE"), index=True)
+    service_id: Mapped[str | None] = mapped_column(ForeignKey("services.id", ondelete="SET NULL"))
+    name: Mapped[str] = mapped_column(String(120))
+    pricing_model: Mapped[str] = mapped_column(String(10))
+    unit_price: Mapped[int] = mapped_column(Integer)
+    quantity: Mapped[Decimal] = mapped_column(Numeric(8, 2))
+    line_total: Mapped[int] = mapped_column(Integer)
+    position: Mapped[int] = mapped_column(Integer, default=0)
+
+
+class OrderStatusEvent(Base):
+    __tablename__ = "order_status_events"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uuid)
+    order_id: Mapped[str] = mapped_column(ForeignKey("orders.id", ondelete="CASCADE"), index=True)
+    from_status: Mapped[str | None] = mapped_column(String(20))
+    to_status: Mapped[str] = mapped_column(String(20))
+    actor_id: Mapped[str | None] = mapped_column(String(36))
+    note: Mapped[str | None] = mapped_column(String(255))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class Payment(Base):
+    __tablename__ = "payments"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uuid)
+    order_id: Mapped[str] = mapped_column(ForeignKey("orders.id", ondelete="CASCADE"), index=True)
+    method: Mapped[str] = mapped_column(String(15))
+    # PENDING → PROCESSING → PAID | FAILED;  PAID → REFUNDED;  FAILED → PROCESSING (retry)
+    status: Mapped[str] = mapped_column(String(12), index=True, default="PENDING")
+    amount: Mapped[int] = mapped_column(Integer)
+    provider: Mapped[str | None] = mapped_column(String(30))
+    provider_reference: Mapped[str | None] = mapped_column(String(80), unique=True)
+    payer_phone: Mapped[str | None] = mapped_column(String(20))
+    failure_reason: Mapped[str | None] = mapped_column(String(255))
+    recorded_by: Mapped[str | None] = mapped_column(String(36))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, onupdate=utcnow)
+
+
+class Commission(Base):
+    __tablename__ = "commissions"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uuid)
+    order_id: Mapped[str] = mapped_column(ForeignKey("orders.id"), unique=True)
+    business_id: Mapped[str] = mapped_column(ForeignKey("businesses.id"), index=True)
+    rate: Mapped[Decimal] = mapped_column(Numeric(5, 2))
+    base_amount: Mapped[int] = mapped_column(Integer)
+    amount: Mapped[int] = mapped_column(Integer)
+    status: Mapped[str] = mapped_column(String(12), default="ACCRUED")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
 class Review(Base):
-    __tablename__="reviews"; id:Mapped[str]=mapped_column(String,primary_key=True,default=uuid); order_id:Mapped[str]=mapped_column(ForeignKey("orders.id"),unique=True); rating:Mapped[int]=mapped_column(Integer); comment:Mapped[str]=mapped_column(String); status:Mapped[str]=mapped_column(String,default="PUBLISHED")
+    __tablename__ = "reviews"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uuid)
+    order_id: Mapped[str] = mapped_column(ForeignKey("orders.id"), unique=True)
+    business_id: Mapped[str] = mapped_column(ForeignKey("businesses.id"), index=True)
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True)
+    author_name: Mapped[str] = mapped_column(String(120), default="")
+    rating: Mapped[int] = mapped_column(Integer)
+    comment: Mapped[str] = mapped_column(String(1000), default="")
+    status: Mapped[str] = mapped_column(String(12), default="PUBLISHED")  # PUBLISHED | HIDDEN
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class Notification(Base):
+    """In-app notification. `kind` is a stable key the clients localise; no translated text is stored."""
+    __tablename__ = "notifications"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uuid)
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    kind: Mapped[str] = mapped_column(String(40))
+    order_id: Mapped[str | None] = mapped_column(ForeignKey("orders.id", ondelete="CASCADE"))
+    data_json: Mapped[str] = mapped_column(Text, default="{}")
+    # NOT_CONFIGURED until a push provider is wired; we never claim a push was delivered.
+    push_status: Mapped[str] = mapped_column(String(16), default="NOT_CONFIGURED")
+    read_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, index=True)
+
+
+class DeviceToken(Base):
+    __tablename__ = "device_tokens"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uuid)
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    token: Mapped[str] = mapped_column(String(512), unique=True)
+    platform: Mapped[str] = mapped_column(String(10))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
 class AuditLog(Base):
-    __tablename__="audit_logs"; id:Mapped[str]=mapped_column(String,primary_key=True,default=uuid); actor_id:Mapped[str]=mapped_column(String,index=True); action:Mapped[str]=mapped_column(String,index=True); entity:Mapped[str]=mapped_column(String); entity_id:Mapped[str]=mapped_column(String); created_at:Mapped[datetime]=mapped_column(DateTime(timezone=True),default=utcnow)
+    __tablename__ = "audit_logs"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uuid)
+    actor_id: Mapped[str | None] = mapped_column(String(36), index=True)
+    action: Mapped[str] = mapped_column(String(60), index=True)
+    entity: Mapped[str] = mapped_column(String(40))
+    entity_id: Mapped[str] = mapped_column(String(36))
+    metadata_json: Mapped[str] = mapped_column(Text, default="{}")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, index=True)

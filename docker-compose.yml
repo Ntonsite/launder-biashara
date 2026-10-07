@@ -1,16 +1,37 @@
 services:
   postgres:
     image: postgis/postgis:16-3.4
-    environment: {POSTGRES_DB: launder, POSTGRES_USER: launder, POSTGRES_PASSWORD: launder_dev}
+    environment:
+      POSTGRES_DB: launder
+      POSTGRES_USER: launder
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-launder_dev}
     volumes: [postgres_data:/var/lib/postgresql/data]
     healthcheck: {test: [CMD-SHELL, pg_isready -U launder], interval: 5s, timeout: 5s, retries: 10}
-  redis: {image: redis:7-alpine}
+
+  redis:
+    image: redis:7-alpine
+    healthcheck: {test: [CMD, redis-cli, ping], interval: 5s, timeout: 3s, retries: 10}
+
   api:
     build: ./apps/api
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql+psycopg://launder:${POSTGRES_PASSWORD:-launder_dev}@postgres:5432/launder
+      REDIS_URL: redis://redis:6379/0
     ports: ["8000:8000"]
-    depends_on: {postgres: {condition: service_healthy}}
+    depends_on:
+      postgres: {condition: service_healthy}
+      redis: {condition: service_healthy}
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health/ready')"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
   web:
     build: ./apps/web
     ports: ["5173:80"]
-    depends_on: [api]
+    depends_on:
+      api: {condition: service_healthy}
+
 volumes: {postgres_data: {}}
