@@ -46,10 +46,13 @@ PRE_READY = (S.NEW, S.ACCEPTED, S.AWAITING_PICKUP, S.RECEIVED, S.WASHING, S.DRYI
 PROCESSING = (S.RECEIVED, S.WASHING, S.DRYING, S.IRONING, S.QUALITY_CHECK)
 PIPELINE = (S.NEW, S.ACCEPTED, S.AWAITING_PICKUP, S.RECEIVED, S.WASHING, S.DRYING, S.IRONING, S.QUALITY_CHECK, S.READY,
             S.OUT_FOR_DELIVERY, S.DELIVERED)
-UNPAID = ("PENDING", "PROCESSING", "FAILED")
+UNPAID = ("PENDING", "PROCESSING", "FAILED", "PARTIAL")
 SOURCES = ("WALK_IN", "MARKETPLACE", "PHONE", "WHATSAPP")
 METHODS = ("CASH", "MOBILE_MONEY")
 OUTSTANDING = and_(LIVE, Order.status != S.NEW, Order.payment_status.in_(UNPAID))
+BALANCE = Order.total - Order.amount_paid
+# The shared walk-in guest record is real sales but not a real person: it stays out of customer metrics.
+NOT_GUEST = Order.customer_id.notin_(select(Customer.id).where(Customer.is_guest.is_(True)))
 
 
 def local_day(column):
@@ -85,7 +88,7 @@ class BusinessAnalytics:
         orders, sales, discounts, cancelled, customers = self.db.execute(select(
             func.count().filter(LIVE), func.coalesce(func.sum(Order.total).filter(LIVE), 0),
             func.coalesce(func.sum(Order.discount).filter(LIVE), 0), func.count().filter(Order.status.in_(CLOSED)),
-            func.count(distinct(Order.customer_id)).filter(LIVE),
+            func.count(distinct(Order.customer_id)).filter(and_(LIVE, NOT_GUEST)),
         ).where(Order.business_id == self.bid, Order.created_at >= start, Order.created_at < end)).one()
         return {"orders": orders, "sales": int(sales), "discounts": int(discounts), "cancelled": cancelled,
                 "created": orders + cancelled, "customers": customers, "average_order": avg_int(int(sales), orders)}
@@ -108,7 +111,7 @@ class BusinessAnalytics:
         conds = [Order.business_id == self.bid, OUTSTANDING]
         if start is not None:
             conds += [Order.created_at >= start, Order.created_at < end]
-        count, amount = self.db.execute(select(func.count(), func.coalesce(func.sum(Order.total), 0)).where(*conds)).one()
+        count, amount = self.db.execute(select(func.count(), func.coalesce(func.sum(BALANCE), 0)).where(*conds)).one()
         return {"count": count, "amount": int(amount)}
 
     def sources(self, start: datetime, end: datetime) -> list[dict]:
@@ -124,12 +127,12 @@ class BusinessAnalytics:
 
     def customers(self, start: datetime, end: datetime) -> dict:
         first = (select(Order.customer_id.label("cid"), func.min(Order.created_at).label("first_at"))
-                 .where(Order.business_id == self.bid, LIVE).group_by(Order.customer_id).subquery())
+                 .where(Order.business_id == self.bid, LIVE, NOT_GUEST).group_by(Order.customer_id).subquery())
         first_source = (select(Order.customer_id.label("cid"), Order.source.label("source"))
-                        .distinct(Order.customer_id).where(Order.business_id == self.bid, LIVE)
+                        .distinct(Order.customer_id).where(Order.business_id == self.bid, LIVE, NOT_GUEST)
                         .order_by(Order.customer_id, Order.created_at).subquery())
         per = (select(Order.customer_id.label("cid"), func.count().label("n"))
-               .where(Order.business_id == self.bid, LIVE, Order.created_at >= start, Order.created_at < end)
+               .where(Order.business_id == self.bid, LIVE, NOT_GUEST, Order.created_at >= start, Order.created_at < end)
                .group_by(Order.customer_id).subquery())
         unique, new, multi, new_mp = self.db.execute(
             select(func.count(), func.count().filter(first.c.first_at >= start), func.count().filter(per.c.n >= 2),
@@ -246,7 +249,8 @@ class BusinessAnalytics:
         rows = self.db.execute(
             select(Customer.id, Customer.name, Customer.phone, func.count(), func.sum(Order.total))
             .join(Order, Order.customer_id == Customer.id)
-            .where(Order.business_id == self.bid, LIVE, Order.created_at >= start, Order.created_at < end)
+            .where(Order.business_id == self.bid, LIVE, Customer.is_guest.is_(False), Order.created_at >= start,
+                   Order.created_at < end)
             .group_by(Customer.id, Customer.name, Customer.phone)
             .order_by(func.sum(Order.total).desc(), Customer.name).limit(limit)).all()
         return [{"id": i, "name": n, "phone": p, "orders": c, "spend": int(v)} for i, n, p, c, v in rows]

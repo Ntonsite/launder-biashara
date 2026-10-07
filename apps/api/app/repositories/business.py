@@ -10,7 +10,7 @@ from ..domain import permissions as P
 from ..domain.clock import now_utc
 from ..domain.periods import local_midnight, resolve
 from ..models import BusinessCustomer, BusinessOnboarding, Customer, Order, Service
-from ..services.analytics import DUE_SOON_HOURS, LIVE, OUTSTANDING, PRE_READY, UNCOLLECTED_HOURS, UNPAID
+from ..services.analytics import BALANCE, DUE_SOON_HOURS, LIVE, OUTSTANDING, PRE_READY, UNCOLLECTED_HOURS, UNPAID
 
 # Order list views, as staff think about the work.
 VIEWS = {
@@ -107,7 +107,7 @@ class BusinessRepository:
         if f.q:
             like = f"%{f.q.strip()}%"
             matching = select(Customer.id).where(or_(Customer.name.ilike(like), Customer.phone.ilike(like)))
-            conds.append(or_(Order.order_number.ilike(like), Order.customer_id.in_(matching)))
+            conds.append(or_(Order.order_number.ilike(like), Order.guest_name.ilike(like), Order.customer_id.in_(matching)))
         return conds
 
     def orders_stmt(self, business_id: str, f: OrderFilters, role: str):
@@ -139,7 +139,7 @@ class BusinessRepository:
             func.max(Order.created_at).filter(LIVE).label("last_order_at"),
             func.min(Order.created_at).filter(LIVE).label("first_order_at"),
             func.count().filter(and_(LIVE, Order.created_at >= now - timedelta(days=FREQUENT_WINDOW_DAYS))).label("recent"),
-            func.coalesce(func.sum(Order.total).filter(OUTSTANDING), 0).label("outstanding"),
+            func.coalesce(func.sum(BALANCE).filter(OUTSTANDING), 0).label("outstanding"),
         ).where(Order.business_id == business_id).group_by(Order.customer_id).subquery())
 
     def customers_stmt(self, business_id: str, q: str | None = None, segment: str | None = None, sort: str = "recent"):
@@ -149,7 +149,7 @@ class BusinessRepository:
                        stats.c.first_order_at, stats.c.recent, stats.c.outstanding)
                 .join(BusinessCustomer, BusinessCustomer.customer_id == Customer.id)
                 .outerjoin(stats, stats.c.cid == Customer.id)
-                .where(BusinessCustomer.business_id == business_id))
+                .where(BusinessCustomer.business_id == business_id, Customer.is_guest.is_(False)))
         if q:
             like = f"%{q.strip()}%"
             stmt = stmt.where(or_(Customer.name.ilike(like), Customer.phone.ilike(like)))

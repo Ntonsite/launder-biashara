@@ -129,7 +129,8 @@ class Service(Base):
     name: Mapped[str] = mapped_column(String(120))
     description: Mapped[str] = mapped_column(String(500), default="")
     category: Mapped[str] = mapped_column(String(80), default="Wash & Iron")
-    pricing_model: Mapped[str] = mapped_column(String(10), default="PER_ITEM")  # PER_ITEM | PER_KG
+    # PER_ITEM | PER_KG | PACKAGE (a fixed-price bundle, e.g. "Family bag up to 6 kg"), counted in whole units
+    pricing_model: Mapped[str] = mapped_column(String(10), default="PER_ITEM")
     price: Mapped[int] = mapped_column(Integer)  # TZS
     turnaround_hours: Mapped[int] = mapped_column(Integer, default=24)
     sort_order: Mapped[int] = mapped_column(Integer, default=0)
@@ -161,8 +162,10 @@ class Customer(Base):
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uuid)
     user_id: Mapped[str | None] = mapped_column(ForeignKey("users.id"), unique=True, index=True)
     name: Mapped[str] = mapped_column(String(120), index=True)
-    phone: Mapped[str] = mapped_column(String(20), unique=True, index=True)
+    # Null only for a laundry's shared "walk-in guest" record, used when a customer leaves no details.
+    phone: Mapped[str | None] = mapped_column(String(20), unique=True, index=True)
     email: Mapped[str | None] = mapped_column(String(255))
+    is_guest: Mapped[bool] = mapped_column(Boolean, default=False)
 
 
 class BusinessCustomer(Base):
@@ -225,13 +228,18 @@ class Order(Base):
     pickup_window_start: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     pickup_window_end: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     payment_method: Mapped[str] = mapped_column(String(15), default="CASH")  # CASH | MOBILE_MONEY
+    # PENDING | PROCESSING | PARTIAL | PAID | FAILED | REFUNDED (PARTIAL: some money received, balance owed)
     payment_status: Mapped[str] = mapped_column(String(12), index=True, default="PENDING")
+    # Sum of PAID payments; balance = total - amount_paid.
+    amount_paid: Mapped[int] = mapped_column(Integer, default=0)
     subtotal: Mapped[int] = mapped_column(Integer, default=0)
     delivery_fee: Mapped[int] = mapped_column(Integer, default=0)
     # Counter discount in TZS: total = subtotal + delivery_fee - discount.
     discount: Mapped[int] = mapped_column(Integer, default=0)
     total: Mapped[int] = mapped_column(Integer)
     notes: Mapped[str] = mapped_column(String(500), default="")
+    # Optional name written on a guest walk-in order's slip ("Mama Asha"); the customer record stays the shared guest.
+    guest_name: Mapped[str | None] = mapped_column(String(120))
     # When the laundry promised the clothes would be ready. Drives "due today" and "overdue".
     due_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     # First time the order reached READY; compared with due_at for on-time performance.

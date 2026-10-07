@@ -19,6 +19,7 @@ from ..repositories.business import BusinessRepository, OrderFilters, customer_s
 from ..schemas.business import (
     BusinessOrderCreate,
     BusinessProfileUpdate,
+    CollectRequest,
     CustomerCreate,
     CustomerNotes,
     HoursUpdate,
@@ -225,8 +226,9 @@ def _due_state(o: Order, now) -> str | None:
 
 
 def _order_row(o: Order, now) -> dict:
-    return {"id": o.id, "order_number": o.order_number, "customer_id": o.customer_id, "customer_name": o.customer.name,
-            "phone": o.customer.phone, "source": o.source, "status": o.status, "fulfillment": o.fulfillment,
+    return {"id": o.id, "order_number": o.order_number, "customer_id": o.customer_id,
+            "customer_name": o.guest_name or o.customer.name, "is_guest": o.customer.is_guest,
+            "phone": o.customer.phone, "source": o.source, "amount_paid": o.amount_paid, "status": o.status, "fulfillment": o.fulfillment,
             "payment_status": o.payment_status, "payment_method": o.payment_method, "total": o.total,
             "created_at": o.created_at, "pickup_window_start": o.pickup_window_start, "pickup_address": o.pickup_address,
             "due_at": o.due_at, "ready_at": o.ready_at, "due_state": _due_state(o, now),
@@ -301,6 +303,8 @@ def _business_order(db: Session, ctx: BusinessContext, order: Order) -> dict:
     data["due_state"] = _due_state(order, now_utc())
     data["can_edit_due"] = ctx.can("orders.edit") and order.status not in S.TERMINAL
     data["can_record_payment"] = ctx.can("payments.record")
+    data["can_collect"] = (order.fulfillment == "DROP_OFF" and order.status in (S.READY, S.DELIVERED)
+                           and P.may_move_to(ctx.user.role, S.COMPLETED, S.DELIVERED, order.fulfillment))
     return data
 
 
@@ -332,7 +336,20 @@ def record_payment(order_id: str, payload: PaymentRecord, ctx: BusinessContext =
                    db: Session = Depends(get_db)):
     ctx.require("payments.record")
     order = _owned_order(db, ctx, order_id)
-    return payment_out(PaymentService(db).record_manual(order, ctx.user.id, payload.method, payload.reference.strip()))
+    return payment_out(PaymentService(db).record_manual(order, ctx.user.id, payload.method, payload.reference.strip(),
+                                                        payload.amount))
+
+
+@router.post("/orders/{order_id}/collect")
+def collect(order_id: str, payload: CollectRequest, ctx: BusinessContext = Depends(business_context),
+            db: Session = Depends(get_db)):
+    """Counter hand-over in one step: take the balance (optional), then mark delivered and completed."""
+    order = _owned_order(db, ctx, order_id)
+    if not P.may_move_to(ctx.user.role, S.COMPLETED, S.DELIVERED, order.fulfillment):
+        raise AppError(403, "FORBIDDEN", "Your role cannot hand over orders")
+    if payload.payment:
+        ctx.require("payments.record")
+    return _business_order(db, ctx, OrderService(db).collect(order, ctx.user, payload.payment))
 
 
 @router.post("/orders/{order_id}/payments/cash")

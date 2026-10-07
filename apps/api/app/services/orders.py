@@ -49,6 +49,20 @@ def customer_for_user(db: Session, user: User) -> Customer:
 
 
 DEFAULT_TURNAROUND_HOURS = 24
+GUEST_NAME = "Walk-in customer"
+
+
+def guest_customer(db: Session, business: Business) -> Customer:
+    """The laundry's shared record for walk-in customers who leave no details. Excluded from CRM and customer metrics."""
+    guest = db.scalar(select(Customer).join(BusinessCustomer, BusinessCustomer.customer_id == Customer.id)
+                      .where(BusinessCustomer.business_id == business.id, Customer.is_guest.is_(True)))
+    if not guest:
+        guest = Customer(name=GUEST_NAME, phone=None, is_guest=True)
+        db.add(guest)
+        db.flush()
+        db.add(BusinessCustomer(business_id=business.id, customer_id=guest.id))
+        db.flush()
+    return guest
 
 
 def ensure_business_customer(db: Session, business_id: str, customer_id: str) -> BusinessCustomer:
@@ -157,18 +171,37 @@ class OrderService:
         order.pickup_window_start = requested
         order.pickup_window_end = as_utc(datetime.fromisoformat(slot["end"]))
 
+    def _counter_customer(self, business: Business, payload: BusinessOrderCreate) -> Customer:
+        """An existing customer of this laundry, a phone number (found or created), or the laundry's walk-in guest."""
+        if payload.customer_id:
+            customer = self.db.scalar(select(Customer).join(BusinessCustomer, BusinessCustomer.customer_id == Customer.id)
+                                      .where(Customer.id == payload.customer_id, BusinessCustomer.business_id == business.id))
+            if not customer:
+                raise not_found("Customer")
+            return customer
+        if payload.phone.strip():
+            try:
+                phone = normalize_tz_phone(payload.phone)
+            except ValueError as exc:
+                raise AppError(422, "INVALID_PHONE", str(exc)) from exc
+            customer = self.db.scalar(select(Customer).where(Customer.phone == phone))
+            if not customer:
+                if len(payload.customer_name.strip()) < 2:
+                    raise AppError(422, "NAME_REQUIRED", "Add the customer's name")
+                customer = Customer(name=payload.customer_name.strip(), phone=phone)
+                self.db.add(customer)
+                self.db.flush()
+            return customer
+        if payload.source != "WALK_IN":
+            raise AppError(422, "PHONE_REQUIRED", "Phone and WhatsApp orders need the customer's phone number")
+        return guest_customer(self.db, business)
+
     def create_business_order(self, business: Business, actor: User, payload: BusinessOrderCreate) -> Order:
-        try:
-            phone = normalize_tz_phone(payload.phone)
-        except ValueError as exc:
-            raise AppError(422, "INVALID_PHONE", str(exc)) from exc
-        customer = self.db.scalar(select(Customer).where(Customer.phone == phone))
-        if not customer:
-            customer = Customer(name=payload.customer_name, phone=phone)
-            self.db.add(customer)
-            self.db.flush()
+        customer = self._counter_customer(business, payload)
         order = Order(business_id=business.id, customer_id=customer.id, source=payload.source, status=S.NEW,
-                      fulfillment=payload.fulfillment, payment_method=payload.payment_method, notes=payload.notes)
+                      fulfillment=payload.fulfillment, payment_method=payload.payment.method if payload.payment
+                      else payload.payment_method, notes=payload.notes,
+                      guest_name=(payload.customer_name.strip() or None) if customer.is_guest else None)
         if payload.items:
             quote = self.market.quote(business, payload.items, "DROP_OFF")
             if quote.unavailable:
@@ -193,16 +226,39 @@ class OrderService:
             order.due_at = as_utc(payload.due_at)
         else:
             order.due_at = self.promised_due([str(i.service_id) for i in payload.items], created)
-        # Counter orders are accepted the moment the laundry enters them.
-        order.status = S.ACCEPTED
-        order.events.append(OrderStatusEvent(from_status=None, to_status=S.NEW, actor_id=actor.id))
-        order.events.append(OrderStatusEvent(from_status=S.NEW, to_status=S.ACCEPTED, actor_id=actor.id))
+        # Counter orders are accepted the moment the laundry enters them. A walk-in drop-off is also already in the shop,
+        # so it goes straight into the normal workflow at RECEIVED. Phone/WhatsApp orders wait for the clothes.
+        path = [S.NEW, S.ACCEPTED] + ([S.RECEIVED] if payload.source == "WALK_IN" and payload.fulfillment == "DROP_OFF" else [])
+        previous = None
+        for status in path:
+            order.events.append(OrderStatusEvent(from_status=previous, to_status=status, actor_id=actor.id))
+            previous = status
+        order.status = path[-1]
         self._insert(order)
-        self.db.add(Payment(order_id=order.id, method=payload.payment_method, amount=order.total, status="PENDING"))
+        self.db.add(Payment(order_id=order.id, method=order.payment_method, amount=order.total, status="PENDING"))
+        self.db.flush()
         ensure_business_customer(self.db, business.id, customer.id)
-        audit(self.db, actor.id, "ORDER_CREATED", "order", order.id, source=payload.source, total=order.total)
+        if payload.payment:
+            PaymentService(self.db).record_manual(order, actor.id, payload.payment.method, payload.payment.reference.strip(),
+                                                  payload.payment.amount, commit=False)
+        audit(self.db, actor.id, "ORDER_CREATED", "order", order.id, source=payload.source, total=order.total,
+              guest=customer.is_guest)
         self.db.commit()
         return order
+
+    def collect(self, order: Order, actor: User, payment=None) -> Order:
+        """Customer collects at the counter: take the balance if given, then READY → DELIVERED → COMPLETED."""
+        if order.fulfillment != "DROP_OFF" or order.status not in (S.READY, S.DELIVERED):
+            raise AppError(409, "INVALID_TRANSITION", "Only ready drop-off orders can be collected at the counter")
+        if payment:
+            PaymentService(self.db).record_manual(order, actor.id, payment.method, payment.reference.strip(), payment.amount)
+            self.db.refresh(order)
+        if order.payment_status != "PAID":
+            raise AppError(409, "PAYMENT_REQUIRED", "Take the balance before handing over the clothes",
+                           {"balance": order.total - order.amount_paid})
+        if order.status == S.READY:
+            order = self._apply(order, S.DELIVERED, actor.id, "Collected at the counter")
+        return self._apply(order, S.COMPLETED, actor.id, "Collected at the counter")
 
     # ---- lifecycle -------------------------------------------------------------------------------------------
     def transition(self, order: Order, target: str, actor: User, note: str = "") -> Order:
@@ -240,7 +296,7 @@ class OrderService:
             payment = PaymentService(self.db).latest(order.id)
             if payment and payment.status in ("PENDING", "PROCESSING"):
                 payment.status, payment.failure_reason = "FAILED", "ORDER_CLOSED"
-                order.payment_status = "FAILED"
+                order.payment_status = "PARTIAL" if order.amount_paid else "FAILED"
         notify_status(self.db, order, target)
         audit(self.db, actor_id, "ORDER_STATUS_CHANGED", "order", order.id, from_status=previous, to_status=target)
         self.db.commit()
@@ -324,6 +380,7 @@ def order_detail(db: Session, order: Order, audience: str) -> dict:
     data = {
         **order_summary(order),
         "subtotal": order.subtotal, "delivery_fee": order.delivery_fee, "discount": order.discount, "notes": order.notes,
+        "amount_paid": order.amount_paid, "balance": max(order.total - order.amount_paid, 0),
         "ready_at": order.ready_at,
         "pickup_address": order.pickup_address, "pickup_notes": order.pickup_notes,
         "pickup_window_end": order.pickup_window_end, "cancel_reason": order.cancel_reason,
@@ -342,7 +399,12 @@ def order_detail(db: Session, order: Order, audience: str) -> dict:
     }
     if audience == "business":
         customer = order.customer
-        data["customer"] = {"id": customer.id, "name": customer.name, "phone": customer.phone}
+        data["customer"] = {"id": customer.id, "name": order.guest_name or customer.name, "phone": customer.phone,
+                            "is_guest": customer.is_guest}
+        data["payments"] = [{"method": p.method, "amount": p.amount, "status": p.status, "reference": p.provider_reference,
+                             "paid_at": p.paid_at} for p in db.scalars(select(Payment).where(
+                                 Payment.order_id == order.id, Payment.status.in_(["PAID", "REFUNDED"]))
+                                 .order_by(Payment.paid_at))]
         data["allowed_next"] = S.allowed_next(order.status, order.fulfillment)
         data["pickup_latitude"], data["pickup_longitude"] = order.pickup_latitude, order.pickup_longitude
     return data

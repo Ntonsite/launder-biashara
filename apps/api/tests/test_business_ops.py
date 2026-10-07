@@ -138,7 +138,7 @@ def test_overdue_and_due_today_drive_attention_and_order_views(client):
     assert counts["due_overdue"] == 1 and counts["in_progress"] == 2 and counts["all"] == 2
 
     # Ready late counts against on-time performance; moving the promise is audited and validated.
-    for step in ("RECEIVED", "WASHING", "READY"):
+    for step in ("WASHING", "READY"):  # walk-ins start at RECEIVED
         assert client.post(f"/api/v1/business/orders/{late['id']}/status", json={"status": step}, headers=headers).status_code == 200
     ops = client.get("/api/v1/business/reports/daily", headers=headers).json()["operations"]
     assert ops["ready_late"] == 1 and ops["on_time_rate"] == 0.0
@@ -176,7 +176,7 @@ def test_roles_see_and_do_only_their_part(client):
                        "items": [{"service_id": services["Shirt"], "quantity": 1}]}, headers=staff).status_code == 403
     assert client.post(f"/api/v1/business/orders/{order['id']}/status", json={"status": "WASHING"},
                        headers=cashier).status_code == 403
-    for step in ("RECEIVED", "WASHING", "READY"):
+    for step in ("WASHING", "READY"):  # walk-ins start at RECEIVED
         assert client.post(f"/api/v1/business/orders/{order['id']}/status", json={"status": step},
                            headers=staff).status_code == 200
     assert client.post(f"/api/v1/business/orders/{order['id']}/payments", json={"method": "CASH"},

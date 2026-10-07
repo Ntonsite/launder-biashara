@@ -201,7 +201,11 @@ def test_counter_order_is_priced_from_services(client, owner):
     menu = services_by_name(client)
     r = client.post("/api/v1/business/orders", json={"customer_name": "Walk In", "phone": "0754000222",
                     "items": [{"service_id": menu["Suit (2 piece)"]["id"], "quantity": 1}]}, headers=owner)
-    assert r.status_code == 201 and r.json()["total"] == 8000 and r.json()["status"] == S.ACCEPTED
+    # A walk-in's clothes are already in the shop; phone orders wait for them.
+    assert r.status_code == 201 and r.json()["total"] == 8000 and r.json()["status"] == S.RECEIVED
+    r = client.post("/api/v1/business/orders", json={"customer_name": "By Phone", "phone": "0754000223", "source": "PHONE",
+                    "items": [{"service_id": menu["Suit (2 piece)"]["id"], "quantity": 1}]}, headers=owner)
+    assert r.json()["status"] == S.ACCEPTED
 
 
 def test_state_machine_rules():

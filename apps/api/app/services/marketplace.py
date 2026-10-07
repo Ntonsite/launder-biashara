@@ -218,7 +218,7 @@ class MarketplaceService:
             if not s or not s.active:
                 quote.unavailable.append(service_id)
                 continue
-            if s.pricing_model == "PER_ITEM" and qty != qty.to_integral_value():
+            if s.pricing_model in ("PER_ITEM", "PACKAGE") and qty != qty.to_integral_value():
                 raise AppError(422, "INVALID_QUANTITY", f"{s.name} must be ordered in whole items")
             if s.pricing_model == "PER_KG" and (qty * 2) != (qty * 2).to_integral_value():
                 raise AppError(422, "INVALID_QUANTITY", f"{s.name} is priced in 0.5 kg steps")

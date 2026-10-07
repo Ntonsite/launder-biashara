@@ -19,6 +19,11 @@ from ..models import Order, Payment
 from .audit import audit
 from .notifications import notify_order
 
+
+def balance(order: Order) -> int:
+    return max(order.total - (order.amount_paid or 0), 0)
+
+
 PAYMENT_TRANSITIONS = {
     "PENDING": {"PROCESSING", "PAID", "FAILED"},
     "PROCESSING": {"PAID", "FAILED"},
@@ -73,11 +78,16 @@ class PaymentService:
         payment.status = target
         payment.failure_reason = reason if target == "FAILED" else None
         payment.updated_at = now_utc()
+        order.payment_status = target
         if target == "PAID":
             payment.paid_at = payment.updated_at
+            order.amount_paid = (order.amount_paid or 0) + payment.amount
+            order.payment_status = "PAID" if order.amount_paid >= order.total else "PARTIAL"
         elif target == "REFUNDED":
             payment.refunded_at = payment.updated_at
-        order.payment_status = target
+            order.amount_paid = max((order.amount_paid or 0) - payment.amount, 0)
+        elif target == "FAILED" and order.amount_paid:
+            order.payment_status = "PARTIAL"  # an earlier part payment still stands
         audit(self.db, actor_id, f"PAYMENT_{target}", "payment", payment.id, order_id=order.id, amount=payment.amount)
         if target in ("PAID", "FAILED", "REFUNDED"):
             notify_order(self.db, order, f"PAYMENT_{target}")
@@ -86,12 +96,12 @@ class PaymentService:
         if order.status in ("CANCELLED", "REJECTED"):
             raise AppError(409, "ORDER_CLOSED", "This order is no longer active")
         payment = self.latest(order.id)
-        if payment and payment.status in ("PAID", "REFUNDED"):
-            raise AppError(409, "ALREADY_PAID", "This order has already been paid")
         if payment and payment.status == "PROCESSING":
             return payment  # idempotent: a request is already waiting for the customer's approval
-        if payment is None or payment.method != "MOBILE_MONEY":
-            payment = Payment(order_id=order.id, method="MOBILE_MONEY", amount=order.total, status="PENDING")
+        if balance(order) <= 0 or order.payment_status == "REFUNDED":
+            raise AppError(409, "ALREADY_PAID", "This order has already been paid")
+        if payment is None or payment.method != "MOBILE_MONEY" or payment.status in ("PAID", "REFUNDED"):
+            payment = Payment(order_id=order.id, method="MOBILE_MONEY", amount=balance(order), status="PENDING")
             self.db.add(payment)
             self.db.flush()
             order.payment_method = "MOBILE_MONEY"
@@ -116,19 +126,26 @@ class PaymentService:
     def record_cash(self, order: Order, actor_id: str) -> Payment:
         return self.record_manual(order, actor_id, "CASH")
 
-    def record_manual(self, order: Order, actor_id: str, method: str, reference: str = "") -> Payment:
+    def record_manual(self, order: Order, actor_id: str, method: str, reference: str = "", amount: int | None = None,
+                      commit: bool = True) -> Payment:
         """Money the laundry received directly: cash, or mobile money paid to its own till number."""
         if order.status in ("CANCELLED", "REJECTED"):
             raise AppError(409, "ORDER_CLOSED", "This order is no longer active")
         payment = self.latest(order.id)
-        if payment and payment.status in ("PAID", "REFUNDED"):
-            raise AppError(409, "ALREADY_PAID", "This order has already been paid")
         if payment and payment.status == "PROCESSING":
             raise AppError(409, "PAYMENT_IN_PROGRESS", "A mobile money payment is in progress for this order")
-        if payment is None or payment.method != method or payment.provider:
-            payment = Payment(order_id=order.id, method=method, amount=order.total, status="PENDING")
+        owed = balance(order)
+        if owed <= 0 or order.payment_status == "REFUNDED":
+            raise AppError(409, "ALREADY_PAID", "This order has already been paid")
+        amount = owed if amount is None else amount
+        if amount > owed:
+            raise AppError(422, "AMOUNT_TOO_LARGE", f"The balance is TZS {owed:,}", {"balance": owed})
+        # Reuse the open placeholder created with the order; anything else (paid, refunded, a provider's) stays as history.
+        if payment is None or payment.status not in ("PENDING", "FAILED") or payment.provider:
+            payment = Payment(order_id=order.id, method=method, amount=amount, status="PENDING")
             self.db.add(payment)
             self.db.flush()
+        payment.method, payment.amount = method, amount
         payment.recorded_by = actor_id
         if method == "MOBILE_MONEY":
             payment.provider = "manual"
@@ -138,7 +155,11 @@ class PaymentService:
                 payment.provider_reference = reference
         order.payment_method = method
         self._move(payment, order, "PAID", actor_id)
-        self.db.commit()
+        if balance(order) > 0:
+            # Keep one open placeholder for what is still owed.
+            self.db.add(Payment(order_id=order.id, method=method, amount=balance(order), status="PENDING"))
+        if commit:
+            self.db.commit()
         return payment
 
     def refund(self, payment: Payment, actor_id: str, reason: str | None) -> Payment:
