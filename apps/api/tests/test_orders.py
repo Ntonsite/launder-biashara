@@ -76,8 +76,8 @@ def test_full_marketplace_journey(client, customer, owner):
     assert done["status"] == S.COMPLETED
 
     # Commission: 5% of laundry services (16,000), not of the pickup fee.
-    analytics = client.get("/api/v1/business/analytics", headers=owner).json()
-    assert analytics["marketplace_commission"] >= 800
+    report = client.get("/api/v1/business/reports/marketplace", params={"period": "today"}, headers=owner).json()
+    assert report["marketplace"]["commission_accrued"] >= 800
 
     # Review updates the public rating.
     before = client.get(f"/api/v1/marketplace/laundries/{FRESHWASH}").json()

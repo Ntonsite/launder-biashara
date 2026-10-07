@@ -15,6 +15,7 @@ from ..domain.phone import normalize_tz_phone
 from ..models import (
     Address,
     Business,
+    BusinessCustomer,
     Commission,
     Customer,
     MarketplaceAccount,
@@ -47,10 +48,28 @@ def customer_for_user(db: Session, user: User) -> Customer:
     return record
 
 
+DEFAULT_TURNAROUND_HOURS = 24
+
+
+def ensure_business_customer(db: Session, business_id: str, customer_id: str) -> BusinessCustomer:
+    link = db.scalar(select(BusinessCustomer).where(BusinessCustomer.business_id == business_id,
+                                                   BusinessCustomer.customer_id == customer_id))
+    if not link:
+        link = BusinessCustomer(business_id=business_id, customer_id=customer_id)
+        db.add(link)
+        db.flush()
+    return link
+
+
 class OrderService:
     def __init__(self, db: Session):
         self.db = db
         self.market = MarketplaceService(db)
+
+    def promised_due(self, service_ids: list[str], start: datetime) -> datetime:
+        """Promise = start + the slowest service's turnaround. Start is drop-off, or the end of the pickup window."""
+        hours = self.db.scalar(select(func.max(Service.turnaround_hours)).where(Service.id.in_(service_ids))) if service_ids else None
+        return as_utc(start) + timedelta(hours=hours or DEFAULT_TURNAROUND_HOURS)
 
     # ---- creation --------------------------------------------------------------------------------------------
     def _insert(self, order: Order) -> Order:
@@ -95,6 +114,7 @@ class OrderService:
             order.items.append(OrderItem(service_id=line["service_id"], name=line["name"], pricing_model=line["pricing_model"],
                                          unit_price=line["unit_price"], quantity=line["quantity"], line_total=line["line_total"],
                                          position=line["position"]))
+        order.due_at = self.promised_due([x["service_id"] for x in quote.lines], order.pickup_window_end or now_utc())
         order.events.append(OrderStatusEvent(from_status=None, to_status=S.NEW, actor_id=user.id))
         try:
             self._insert(order)
@@ -106,6 +126,7 @@ class OrderService:
                 return winner, False
             raise
         self.db.add(Payment(order_id=order.id, method=payload.payment_method, amount=order.total, status="PENDING"))
+        ensure_business_customer(self.db, business.id, customer.id)
         audit(self.db, user.id, "ORDER_PLACED", "order", order.id, business_id=business.id, total=order.total)
         self.db.commit()
         return order, True
@@ -156,17 +177,29 @@ class OrderService:
                 order.items.append(OrderItem(service_id=line["service_id"], name=line["name"], pricing_model=line["pricing_model"],
                                              unit_price=line["unit_price"], quantity=line["quantity"],
                                              line_total=line["line_total"], position=line["position"]))
-            order.subtotal = order.total = quote.subtotal
+            order.subtotal = quote.subtotal
         elif payload.total:
-            order.subtotal = order.total = payload.total
+            order.subtotal = payload.total
         else:
             raise AppError(422, "ITEMS_REQUIRED", "Add at least one service or an order amount")
+        if payload.discount > order.subtotal:
+            raise AppError(422, "DISCOUNT_TOO_LARGE", "The discount cannot be more than the order value")
+        order.discount = payload.discount
+        order.total = order.subtotal - payload.discount
+        created = now_utc()
+        if payload.due_at:
+            if as_utc(payload.due_at) <= created:
+                raise AppError(422, "DUE_IN_PAST", "The promised time must be in the future")
+            order.due_at = as_utc(payload.due_at)
+        else:
+            order.due_at = self.promised_due([str(i.service_id) for i in payload.items], created)
         # Counter orders are accepted the moment the laundry enters them.
         order.status = S.ACCEPTED
         order.events.append(OrderStatusEvent(from_status=None, to_status=S.NEW, actor_id=actor.id))
         order.events.append(OrderStatusEvent(from_status=S.NEW, to_status=S.ACCEPTED, actor_id=actor.id))
         self._insert(order)
         self.db.add(Payment(order_id=order.id, method=payload.payment_method, amount=order.total, status="PENDING"))
+        ensure_business_customer(self.db, business.id, customer.id)
         audit(self.db, actor.id, "ORDER_CREATED", "order", order.id, source=payload.source, total=order.total)
         self.db.commit()
         return order
@@ -190,6 +223,8 @@ class OrderService:
         values = {"status": target, "updated_at": now_utc()}
         if target == S.COMPLETED:
             values["completed_at"] = now_utc()
+        if target == S.READY and order.ready_at is None:
+            values["ready_at"] = now_utc()
         if target in (S.REJECTED, S.CANCELLED):
             values["cancel_reason"] = note
         # Optimistic concurrency: the update only applies if nobody moved the order since we read it.
@@ -220,6 +255,16 @@ class OrderService:
         # Commission is charged on the laundry services, not on the pickup fee passed through to the customer.
         self.db.add(Commission(order_id=order.id, business_id=order.business_id, rate=rate, base_amount=order.subtotal,
                                amount=percentage_of(order.subtotal, rate)))
+
+    def set_due(self, order: Order, due_at: datetime, actor: User) -> Order:
+        if order.status in S.TERMINAL:
+            raise AppError(409, "ORDER_CLOSED", "This order is closed")
+        previous = order.due_at
+        order.due_at = as_utc(due_at)
+        audit(self.db, actor.id, "ORDER_DUE_CHANGED", "order", order.id, old=previous.isoformat() if previous else None,
+              new=order.due_at.isoformat())
+        self.db.commit()
+        return order
 
     def customer_cancel(self, order: Order, user: User, reason: str) -> Order:
         if not S.customer_can_cancel(order.status):
@@ -268,7 +313,7 @@ def order_summary(order: Order, business: Business | None = None) -> dict:
             "payment_status": order.payment_status, "payment_method": order.payment_method, "total": order.total,
             "item_count": float(sum(Decimal(i.quantity) for i in order.items if i.pricing_model == "PER_ITEM")),
             "items_preview": [i.name for i in order.items[:3]], "created_at": order.created_at,
-            "pickup_window_start": order.pickup_window_start, "source": order.source,
+            "pickup_window_start": order.pickup_window_start, "source": order.source, "due_at": order.due_at,
             "laundry": {"id": business.id, "slug": business.slug, "name": business.name, "area": business.area,
                         "cover_image_url": business.cover_image_url}}
 
@@ -278,7 +323,8 @@ def order_detail(db: Session, order: Order, audience: str) -> dict:
     payment = PaymentService(db).latest(order.id)
     data = {
         **order_summary(order),
-        "subtotal": order.subtotal, "delivery_fee": order.delivery_fee, "notes": order.notes,
+        "subtotal": order.subtotal, "delivery_fee": order.delivery_fee, "discount": order.discount, "notes": order.notes,
+        "ready_at": order.ready_at,
         "pickup_address": order.pickup_address, "pickup_notes": order.pickup_notes,
         "pickup_window_end": order.pickup_window_end, "cancel_reason": order.cancel_reason,
         "completed_at": order.completed_at, "updated_at": order.updated_at,

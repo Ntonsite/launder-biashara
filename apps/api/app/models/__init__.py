@@ -3,10 +3,12 @@ from .entities import (
     AuditLog,
     Branch,
     Business,
+    BusinessCustomer,
     BusinessHours,
     BusinessOnboarding,
     Commission,
     Customer,
+    DayClose,
     DeviceToken,
     Favourite,
     MarketplaceAccount,
@@ -23,7 +25,7 @@ from .entities import (
 )
 
 __all__ = [
-    "Address", "AuditLog", "Branch", "Business", "BusinessHours", "BusinessOnboarding", "Commission", "Customer",
-    "DeviceToken", "Favourite", "MarketplaceAccount", "Notification", "Order", "OrderItem", "OrderStatusEvent",
+    "Address", "AuditLog", "Branch", "Business", "BusinessCustomer", "BusinessHours", "BusinessOnboarding", "Commission", "Customer",
+    "DayClose", "DeviceToken", "Favourite", "MarketplaceAccount", "Notification", "Order", "OrderItem", "OrderStatusEvent",
     "OtpChallenge", "Payment", "RefreshToken", "Review", "Service", "User",
 ]

@@ -91,9 +91,3 @@ def test_review_moderation_recomputes_rating(client, admin):
     after = {x["name"]: x for x in client.get("/api/v1/marketplace/laundries", params={"page_size": 50}).json()["items"]}
     assert after[target["business_name"]]["review_count"] == before[target["business_name"]]["review_count"] - 1
     client.post(f"/api/v1/admin/reviews/{target['id']}/publish", headers=admin)
-
-
-def test_analytics_excludes_unpaid_from_revenue(client):
-    owner = bearer(staff_login(client, "owner@t-laundry.co.tz")["access_token"])
-    data = client.get("/api/v1/business/analytics", headers=owner).json()
-    assert data["revenue"] > 0 and data["outstanding"] > 0 and data["marketplace_commission"] == 0

@@ -73,6 +73,10 @@ class PaymentService:
         payment.status = target
         payment.failure_reason = reason if target == "FAILED" else None
         payment.updated_at = now_utc()
+        if target == "PAID":
+            payment.paid_at = payment.updated_at
+        elif target == "REFUNDED":
+            payment.refunded_at = payment.updated_at
         order.payment_status = target
         audit(self.db, actor_id, f"PAYMENT_{target}", "payment", payment.id, order_id=order.id, amount=payment.amount)
         if target in ("PAID", "FAILED", "REFUNDED"):
@@ -110,6 +114,10 @@ class PaymentService:
         return payment
 
     def record_cash(self, order: Order, actor_id: str) -> Payment:
+        return self.record_manual(order, actor_id, "CASH")
+
+    def record_manual(self, order: Order, actor_id: str, method: str, reference: str = "") -> Payment:
+        """Money the laundry received directly: cash, or mobile money paid to its own till number."""
         if order.status in ("CANCELLED", "REJECTED"):
             raise AppError(409, "ORDER_CLOSED", "This order is no longer active")
         payment = self.latest(order.id)
@@ -117,12 +125,18 @@ class PaymentService:
             raise AppError(409, "ALREADY_PAID", "This order has already been paid")
         if payment and payment.status == "PROCESSING":
             raise AppError(409, "PAYMENT_IN_PROGRESS", "A mobile money payment is in progress for this order")
-        if payment is None or payment.method != "CASH":
-            payment = Payment(order_id=order.id, method="CASH", amount=order.total, status="PENDING")
+        if payment is None or payment.method != method or payment.provider:
+            payment = Payment(order_id=order.id, method=method, amount=order.total, status="PENDING")
             self.db.add(payment)
             self.db.flush()
         payment.recorded_by = actor_id
-        order.payment_method = "CASH"
+        if method == "MOBILE_MONEY":
+            payment.provider = "manual"
+            if reference:
+                if self.db.scalar(select(Payment.id).where(Payment.provider_reference == reference)):
+                    raise AppError(409, "DUPLICATE_REFERENCE", "This transaction reference was already recorded")
+                payment.provider_reference = reference
+        order.payment_method = method
         self._move(payment, order, "PAID", actor_id)
         self.db.commit()
         return payment

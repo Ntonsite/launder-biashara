@@ -4,11 +4,11 @@ Money: Tanzanian shillings have no minor unit in practice, so every amount is st
 TZS. Rates and fractional quantities (kg) use Numeric and are combined with Decimal arithmetic; nothing monetary
 ever passes through a float.
 """
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from decimal import Decimal
 from uuid import uuid4
 
-from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Index, Integer, Numeric, String, Text, UniqueConstraint
+from sqlalchemy import Boolean, Date, DateTime, Float, ForeignKey, Index, Integer, Numeric, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from ..database import Base
@@ -29,7 +29,7 @@ class User(Base):
     phone: Mapped[str | None] = mapped_column(String(20), unique=True, index=True)
     password_hash: Mapped[str | None] = mapped_column(String(255))
     full_name: Mapped[str] = mapped_column(String(120), default="")
-    # SUPER_ADMIN, ADMIN, BUSINESS_OWNER, BRANCH_MANAGER, STAFF, CUSTOMER
+    # SUPER_ADMIN, ADMIN, CUSTOMER; business roles: BUSINESS_OWNER, BRANCH_MANAGER, CASHIER, STAFF, DRIVER
     role: Mapped[str] = mapped_column(String(20), index=True)
     # Staff and managers belong to a business; owners are linked through Business.owner_id.
     business_id: Mapped[str | None] = mapped_column(ForeignKey("businesses.id", use_alter=True, name="fk_users_business"), index=True)
@@ -165,6 +165,18 @@ class Customer(Base):
     email: Mapped[str | None] = mapped_column(String(255))
 
 
+class BusinessCustomer(Base):
+    """A customer as known to one laundry (its CRM list). Created with the first order or added at the counter."""
+    __tablename__ = "business_customers"
+    __table_args__ = (UniqueConstraint("business_id", "customer_id"),)
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uuid)
+    business_id: Mapped[str] = mapped_column(ForeignKey("businesses.id", ondelete="CASCADE"), index=True)
+    customer_id: Mapped[str] = mapped_column(ForeignKey("customers.id", ondelete="CASCADE"), index=True)
+    notes: Mapped[str] = mapped_column(String(500), default="")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    customer: Mapped[Customer] = relationship(viewonly=True)
+
+
 class Address(Base):
     __tablename__ = "addresses"
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uuid)
@@ -193,6 +205,10 @@ class Order(Base):
     __tablename__ = "orders"
     __table_args__ = (
         Index("ix_orders_business_created", "business_id", "created_at"),
+        Index("ix_orders_business_status", "business_id", "status"),
+        Index("ix_orders_business_due", "business_id", "due_at"),
+        Index("ix_orders_business_completed", "business_id", "completed_at"),
+        Index("ix_orders_business_customer", "business_id", "customer_id", "created_at"),
         UniqueConstraint("customer_id", "idempotency_key", name="uq_orders_customer_idempotency"),
     )
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uuid)
@@ -212,8 +228,14 @@ class Order(Base):
     payment_status: Mapped[str] = mapped_column(String(12), index=True, default="PENDING")
     subtotal: Mapped[int] = mapped_column(Integer, default=0)
     delivery_fee: Mapped[int] = mapped_column(Integer, default=0)
+    # Counter discount in TZS: total = subtotal + delivery_fee - discount.
+    discount: Mapped[int] = mapped_column(Integer, default=0)
     total: Mapped[int] = mapped_column(Integer)
     notes: Mapped[str] = mapped_column(String(500), default="")
+    # When the laundry promised the clothes would be ready. Drives "due today" and "overdue".
+    due_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # First time the order reached READY; compared with due_at for on-time performance.
+    ready_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     idempotency_key: Mapped[str | None] = mapped_column(String(64))
     cancel_reason: Mapped[str | None] = mapped_column(String(255))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, index=True)
@@ -228,6 +250,7 @@ class Order(Base):
 class OrderItem(Base):
     """Prices are snapshotted at order time; the live Service row may change later."""
     __tablename__ = "order_items"
+    __table_args__ = (Index("ix_order_items_service", "service_id"),)
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uuid)
     order_id: Mapped[str] = mapped_column(ForeignKey("orders.id", ondelete="CASCADE"), index=True)
     service_id: Mapped[str | None] = mapped_column(ForeignKey("services.id", ondelete="SET NULL"))
@@ -241,6 +264,7 @@ class OrderItem(Base):
 
 class OrderStatusEvent(Base):
     __tablename__ = "order_status_events"
+    __table_args__ = (Index("ix_order_events_status_at", "to_status", "created_at"),)
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uuid)
     order_id: Mapped[str] = mapped_column(ForeignKey("orders.id", ondelete="CASCADE"), index=True)
     from_status: Mapped[str | None] = mapped_column(String(20))
@@ -263,6 +287,9 @@ class Payment(Base):
     payer_phone: Mapped[str | None] = mapped_column(String(20))
     failure_reason: Mapped[str | None] = mapped_column(String(255))
     recorded_by: Mapped[str | None] = mapped_column(String(36))
+    # Money in (paid_at) and back out (refunded_at) are reported on the day they happen, not the order date.
+    paid_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), index=True)
+    refunded_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, onupdate=utcnow)
 
@@ -277,6 +304,21 @@ class Commission(Base):
     amount: Mapped[int] = mapped_column(Integer)
     status: Mapped[str] = mapped_column(String(12), default="ACCRUED")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class DayClose(Base):
+    """End-of-day review. A snapshot plus the cash actually counted; it does not lock any transaction."""
+    __tablename__ = "day_closes"
+    __table_args__ = (UniqueConstraint("business_id", "business_date"),)
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uuid)
+    business_id: Mapped[str] = mapped_column(ForeignKey("businesses.id", ondelete="CASCADE"), index=True)
+    business_date: Mapped[date] = mapped_column(Date)
+    expected_cash: Mapped[int] = mapped_column(Integer)
+    counted_cash: Mapped[int | None] = mapped_column(Integer)
+    snapshot_json: Mapped[str] = mapped_column(Text, default="{}")
+    note: Mapped[str] = mapped_column(String(500), default="")
+    closed_by: Mapped[str] = mapped_column(String(36))
+    closed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
 
 class Review(Base):

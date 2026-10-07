@@ -13,7 +13,7 @@ from .core.config import settings
 from .core.errors import AppError, install_error_handlers
 from .core.logging import RequestContextMiddleware, configure_logging
 from .database import SessionLocal, get_db
-from .routers import admin, auth, business, customer, marketplace, payments
+from .routers import admin, auth, business, business_reports, customer, marketplace, payments
 
 configure_logging()
 log = logging.getLogger("launder.app")
@@ -60,5 +60,6 @@ def ready(db: Session = Depends(get_db)):
     return {"status": "ready", "database": "connected", "ratelimit": ratelimit.backend_name()}
 
 
-for router in (auth.router, marketplace.router, customer.router, business.router, admin.router, payments.router):
+for router in (auth.router, marketplace.router, customer.router, business.router, business_reports.router, admin.router,
+               payments.router):
     app.include_router(router, prefix="/api/v1")

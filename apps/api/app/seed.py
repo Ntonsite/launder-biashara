@@ -15,6 +15,7 @@ from .domain import order_states as S
 from .domain.clock import now_utc
 from .models import (
     Business,
+    BusinessCustomer,
     BusinessHours,
     BusinessOnboarding,
     Commission,
@@ -28,6 +29,7 @@ from .models import (
     Service,
     User,
 )
+from .seed_operations import seed_operating_history
 from .services.orders import new_order_number
 from .services.reviews import recompute_rating
 
@@ -122,13 +124,20 @@ def _history(db, business: Business, services: list[Service], customers: list[Cu
             previous = st
         if status == S.CANCELLED:
             order.cancel_reason = "Customer changed plans"
+        order.due_at = created + timedelta(hours=24)
+        order.ready_at = next((e.created_at for e in order.events if e.to_status == S.READY), None)
         paid = status == S.COMPLETED
         order.payment_status = "PAID" if paid else ("FAILED" if status == S.CANCELLED else "PENDING")
         if paid:
             order.completed_at = created + timedelta(hours=len(path) * 3)
         db.add(order)
         db.flush()
-        db.add(Payment(order_id=order.id, method="CASH", amount=order.total, status=order.payment_status))
+        if not db.scalar(select(BusinessCustomer.id).where(BusinessCustomer.business_id == business.id,
+                                                          BusinessCustomer.customer_id == customer.id)):
+            db.add(BusinessCustomer(business_id=business.id, customer_id=customer.id, created_at=created))
+            db.flush()
+        db.add(Payment(order_id=order.id, method="CASH", amount=order.total, status=order.payment_status,
+                       paid_at=order.completed_at if paid else None))
         if paid and source == "MARKETPLACE":
             rate = Decimal("5.00")
             db.add(Commission(order_id=order.id, business_id=business.id, rate=rate, base_amount=order.subtotal,
@@ -141,6 +150,12 @@ def _history(db, business: Business, services: list[Service], customers: list[Cu
 
 
 def seed(db) -> bool:
+    """Base demo data once; FreshWash's operating history is added separately (also to databases seeded earlier)."""
+    created = _seed_base(db)
+    return seed_operating_history(db) or created
+
+
+def _seed_base(db) -> bool:
     if db.scalar(select(User.id).where(User.email == "admin@launder.co.tz")):
         return False
     rng = random.Random(255)

@@ -1,3 +1,4 @@
+from datetime import date, datetime
 from typing import Any, Literal
 
 from pydantic import BaseModel, Field, field_validator
@@ -27,7 +28,12 @@ class ServiceCreate(BaseModel):
 class CustomerCreate(BaseModel):
     name: str = Field(min_length=2, max_length=120)
     phone: str = Field(min_length=9, max_length=20)
-    email: str | None = None
+    email: str | None = Field(default=None, max_length=255)
+    notes: str = Field(default="", max_length=500)
+
+
+class CustomerNotes(BaseModel):
+    notes: str = Field(default="", max_length=500)
 
 
 class BusinessOrderCreate(BaseModel):
@@ -40,6 +46,25 @@ class BusinessOrderCreate(BaseModel):
     total: int | None = Field(default=None, gt=0, le=100_000_000)
     payment_method: Literal["CASH", "MOBILE_MONEY"] = "CASH"
     notes: str = Field(default="", max_length=500)
+    discount: int = Field(default=0, ge=0, le=100_000_000)
+    # Promised ready time; defaults to now + the slowest selected service's turnaround.
+    due_at: datetime | None = None
+
+
+class OrderUpdate(BaseModel):
+    due_at: datetime
+
+
+class PaymentRecord(BaseModel):
+    method: Literal["CASH", "MOBILE_MONEY"] = "CASH"
+    # e.g. the M-Pesa / Mixx by Yas / Airtel Money transaction id when paid to the laundry's own till.
+    reference: str = Field(default="", max_length=60)
+
+
+class DayCloseCreate(BaseModel):
+    date: date
+    counted_cash: int | None = Field(default=None, ge=0, le=1_000_000_000)
+    note: str = Field(default="", max_length=500)
 
 
 class BusinessProfileUpdate(BaseModel):
@@ -77,7 +102,7 @@ class StaffCreate(BaseModel):
     full_name: str = Field(min_length=2, max_length=120)
     email: str = Field(min_length=5, max_length=255, pattern=r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
     password: str = Field(min_length=8, max_length=128)
-    role: Literal["BRANCH_MANAGER", "STAFF"] = "STAFF"
+    role: Literal["BRANCH_MANAGER", "CASHIER", "STAFF", "DRIVER"] = "STAFF"
 
 
 class MarketplaceApplication(BaseModel):

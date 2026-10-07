@@ -8,12 +8,13 @@ from sqlalchemy.orm import Session
 from .core.errors import AppError
 from .core.security import decode_token
 from .database import get_db
+from .domain import permissions as P
 from .models import Business, User
 
 bearer = HTTPBearer(auto_error=False)
 
 ADMIN_ROLES = ("ADMIN", "SUPER_ADMIN")
-BUSINESS_ROLES = ("BUSINESS_OWNER", "BRANCH_MANAGER", "STAFF")
+BUSINESS_ROLES = P.BUSINESS_ROLES
 
 
 def current_user(credentials: HTTPAuthorizationCredentials | None = Depends(bearer), db: Session = Depends(get_db)) -> User:
@@ -70,8 +71,19 @@ class BusinessContext:
             raise AppError(403, "FORBIDDEN", "Only the business owner can do this")
 
     def require_manager(self) -> None:
-        if self.user.role not in ("BUSINESS_OWNER", "BRANCH_MANAGER"):
+        if self.user.role not in (P.OWNER, P.MANAGER):
             raise AppError(403, "FORBIDDEN", "Manager permission required")
+
+    @property
+    def capabilities(self) -> frozenset[str]:
+        return P.capabilities(self.user.role)
+
+    def can(self, capability: str) -> bool:
+        return capability in self.capabilities
+
+    def require(self, capability: str) -> None:
+        if not self.can(capability):
+            raise AppError(403, "FORBIDDEN", "Your role does not have access to this")
 
 
 def business_context(user: User = Depends(require_business), db: Session = Depends(get_db)) -> BusinessContext:
