@@ -1,44 +1,60 @@
 # Launder
 
-Premium bilingual laundry marketplace and business operations platform for Tanzania.
+Laundry Business SaaS + Laundry Marketplace for Tanzania. English and Kiswahili.
 
-## Run the web app
+* **Launder Marketplace** — customers find laundries nearby, order pickup or drop-off, track, pay, review, reorder.
+* **Launder Business** — laundries run orders, customers, services, prices, staff and payments. Joining the
+  marketplace is a separate application reviewed by Launder.
+
+| Part | Where |
+|---|---|
+| API (FastAPI, PostgreSQL/PostGIS, Redis) | `apps/api` |
+| Web: marketplace, account, Business, Admin (React) | `apps/web` |
+| Customer mobile app (Flutter) | `../../mobile/launder` |
+| Brand assets generator | `brand/generate.py` |
+| Docs | `docs/` — start with [IMPLEMENTATION_STATUS.md](docs/IMPLEMENTATION_STATUS.md) |
+
+## Run everything with Docker
 
 ```bash
+cp .env.example .env          # then set JWT_SECRET to a long random value
+docker compose up --build     # PostGIS, Redis, API (migrates + seeds in development), web
+```
+
+* Web: http://localhost:5173 · API docs: http://localhost:8000/api/docs · Health: `/health`, `/health/ready`
+
+## Run without Docker
+
+```bash
+cd apps/api
+pip install -r requirements-dev.txt
+uvicorn app.main:app --port 8000          # SQLite, migrates and seeds on start (AUTO_SEED defaults to true)
+
 cd apps/web
 npm install
-npm run dev
+npm run dev                               # proxies /api and /media to 127.0.0.1:8000
 ```
 
-Open `http://localhost:5173`. The customer journey is `/` → `/laundries` → storefront → checkout → tracking. The business dashboard is at `/app`.
+## Demo accounts (development seed only)
 
-## Demo credentials
+| Who | Sign in |
+|---|---|
+| Customer | Any Tanzanian mobile number; the one-time code is shown in development |
+| FreshWash Laundry (marketplace, live) | `owner@freshwash.co.tz` / `Demo123!` · staff `staff@freshwash.co.tz` / `Demo123!` |
+| T-Laundry (marketplace application pending review) | `owner@t-laundry.co.tz` / `Demo123!` |
+| Other live laundries | `owner@cleanpro.co.tz`, `owner@safilaundry.co.tz`, `owner@bahari.co.tz`, `owner@upangaexpress.co.tz` / `Demo123!` |
+| Platform admin | `admin@launder.co.tz` / `Admin123!` |
 
-T-Laundry business owner:
+Business sign-in: `/business/login`. Admin: `/admin/login`. These credentials exist only when `AUTO_SEED=true`,
+which the API refuses in production.
 
-```text
-Email: owner@t-laundry.co.tz
-Password: Demo123!
+## Tests
+
+```bash
+cd apps/api && python -m pytest && ruff check .
+cd apps/web && npm run typecheck && npm test && npm run build
+cd apps/web && npx playwright test        # needs the API running on :8000
+cd ../../mobile/launder && flutter analyze && flutter test
 ```
 
-Launder platform administrator:
-
-```text
-Email: admin@launder.co.tz
-Password: Admin123!
-```
-
-Use `/business/login` for T-Laundry and `/admin/login` for the platform administrator. Credentials are seeded in the local database and are intentionally not displayed or prefilled in either login form. Start the API locally before signing in:
-
-```powershell
-cd apps/api
-python -m uvicorn app.main:app --host 127.0.0.1 --port 8000
-```
-
-The admin interface reads protected platform data from the API and persists Marketplace approval, rejection and suspension decisions with an audit record.
-
-## Docker
-
-Copy `.env.example` to `.env`, replace development secrets, then run `docker compose up --build`.
-
-API docs are available at `http://localhost:8000/api/docs`; health is at `/health`.
+See [docs/TEST_REPORT.md](docs/TEST_REPORT.md) for the latest results.
