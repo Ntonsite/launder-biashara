@@ -11,7 +11,8 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
     app_env: Literal["development", "test", "production"] = "development"
-    database_url: str = "sqlite:///./launder_dev.db"
+    # PostgreSQL + PostGIS only (the docker-compose `postgres` service, published on localhost:5432).
+    database_url: str = "postgresql+psycopg://launder:launder_dev@localhost:5432/launder"
     redis_url: str | None = None
     jwt_secret: str = INSECURE_DEFAULT_SECRET
     jwt_algorithm: str = "HS256"
@@ -39,6 +40,8 @@ class Settings(BaseSettings):
 
     @model_validator(mode="after")
     def _production_guard(self):
+        if not self.database_url.startswith("postgresql"):
+            raise ValueError("DATABASE_URL must point at PostgreSQL (PostGIS); SQLite is not supported")
         if self.app_env == "production":
             if self.jwt_secret == INSECURE_DEFAULT_SECRET or len(self.jwt_secret) < 32:
                 raise ValueError("JWT_SECRET must be set to a strong value in production")
@@ -49,10 +52,6 @@ class Settings(BaseSettings):
     @cached_property
     def cors_origins(self) -> list[str]:
         return [x.strip() for x in self.cors_origins_csv.split(",") if x.strip()]
-
-    @property
-    def is_sqlite(self) -> bool:
-        return self.database_url.startswith("sqlite")
 
     @property
     def dev_tools_enabled(self) -> bool:

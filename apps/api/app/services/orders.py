@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 from ..core.errors import AppError, not_found
 from ..domain import order_states as S
 from ..domain.clock import as_utc, now_utc
+from ..domain.geo import haversine_km
 from ..domain.money import percentage_of
 from ..domain.phone import normalize_tz_phone
 from ..models import (
@@ -121,8 +122,7 @@ class OrderService:
         else:
             raise AppError(422, "ADDRESS_REQUIRED", "A pickup address is required")
         if lat is not None and lng is not None and business.latitude is not None:
-            from ..database import _haversine_km  # same formula as the SQLite geo function; precision is ample here
-            if _haversine_km(lat, lng, business.latitude, business.longitude) > float(account.pickup_radius_km):
+            if haversine_km(lat, lng, business.latitude, business.longitude) > float(account.pickup_radius_km):
                 raise AppError(409, "OUTSIDE_PICKUP_AREA", "This address is outside the laundry's pickup area")
         if not payload.pickup_window_start:
             raise AppError(422, "PICKUP_TIME_REQUIRED", "Choose a pickup time")

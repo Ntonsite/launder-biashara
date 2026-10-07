@@ -1,9 +1,14 @@
 import os
-import tempfile
-from pathlib import Path
 
-_db = Path(tempfile.mkdtemp()) / "launder_test.db"
-os.environ.update(DATABASE_URL=f"sqlite:///{_db.as_posix()}", APP_ENV="test", AUTO_SEED="true", EXPOSE_DEV_OTP="true",
+import psycopg
+
+# Tests run against the PostGIS container (`docker compose up -d postgres`). Each session gets a fresh database.
+_server = os.environ.get("TEST_DATABASE_SERVER", "launder:launder_dev@localhost:5432")
+_name = os.environ.get("TEST_DATABASE_NAME", "launder_test")
+with psycopg.connect(f"postgresql://{_server}/postgres", autocommit=True) as _admin:
+    _admin.execute(f'DROP DATABASE IF EXISTS "{_name}" WITH (FORCE)')
+    _admin.execute(f'CREATE DATABASE "{_name}"')
+os.environ.update(DATABASE_URL=f"postgresql+psycopg://{_server}/{_name}", APP_ENV="test", AUTO_SEED="true", EXPOSE_DEV_OTP="true",
                   REDIS_URL="", JWT_SECRET="test-secret-that-is-long-enough-for-hs256-usage")
 
 import pytest  # noqa: E402

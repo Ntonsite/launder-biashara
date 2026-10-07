@@ -23,12 +23,15 @@ docker compose up --build     # PostGIS, Redis, API (migrates + seeds in develop
 
 * Web: http://localhost:5173 · API docs: http://localhost:8000/api/docs · Health: `/health`, `/health/ready`
 
-## Run without Docker
+## Run the API outside Docker
+
+The API runs on PostgreSQL + PostGIS only. Start the database containers, then the API on the host:
 
 ```bash
+docker compose up -d postgres redis      # published on 127.0.0.1:5432 and :6379
 cd apps/api
 pip install -r requirements-dev.txt
-uvicorn app.main:app --port 8000          # SQLite, migrates and seeds on start (AUTO_SEED defaults to true)
+uvicorn app.main:app --port 8000          # migrates and seeds on start (AUTO_SEED defaults to true)
 
 cd apps/web
 npm install
@@ -51,7 +54,7 @@ which the API refuses in production.
 ## Tests
 
 ```bash
-cd apps/api && python -m pytest && ruff check .
+cd apps/api && python -m pytest && ruff check .   # needs the postgres container; uses a fresh launder_test database
 cd apps/web && npm run typecheck && npm test && npm run build
 cd apps/web && npx playwright test        # needs the API running on :8000
 cd ../../mobile/launder && flutter analyze && flutter test

@@ -38,8 +38,10 @@ whichever client touches them.
   `Idempotency-Key`.
 * **Money** — whole shillings as integers; commission and per-kg lines computed with `Decimal`,
   half-up rounding. Commission is accrued on the laundry subtotal when a marketplace order completes.
-* **Geography** — PostgreSQL uses `ST_DWithin` / `ST_Distance` on `geography(ST_MakePoint(lng, lat))`
-  with a matching expression index; SQLite (tests, quick local runs) registers an equivalent haversine function.
+* **Database** — PostgreSQL 16 + PostGIS everywhere: development, tests (a fresh `launder_test` database per run)
+  and production. SQLite is not supported.
+* **Geography** — `ST_DWithin` / `ST_Distance` on `geography(ST_MakePoint(lng, lat))` with a matching
+  expression index.
 
 ## Clients
 

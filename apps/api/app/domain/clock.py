@@ -15,5 +15,5 @@ def now_local() -> datetime:
 
 
 def as_utc(value: datetime) -> datetime:
-    """SQLite returns naive datetimes; treat them as UTC, which is how they were written."""
+    """Normalise to UTC; naive values (e.g. from client input) are taken as UTC."""
     return value.replace(tzinfo=UTC) if value.tzinfo is None else value.astimezone(UTC)

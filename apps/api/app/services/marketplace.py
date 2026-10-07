@@ -33,22 +33,17 @@ def _geography(lat_col, lng_col):
 
 
 class Geo:
-    """Distance expressions. PostgreSQL uses PostGIS geography (indexed by ix_businesses_geog);
-    SQLite (dev/tests) uses a registered haversine function with the same semantics."""
+    """PostGIS geography distance expressions (indexed by ix_businesses_geog)."""
 
     def __init__(self, db: Session):
-        self.postgis = db.get_bind().dialect.name == "postgresql"
+        self.db = db
 
     def distance_km(self, lat: float, lng: float):
-        if self.postgis:
-            return func.ST_Distance(_geography(Business.latitude, Business.longitude), _geography(literal(lat), literal(lng))) / 1000.0
-        return func.haversine_km(Business.latitude, Business.longitude, lat, lng)
+        return func.ST_Distance(_geography(Business.latitude, Business.longitude), _geography(literal(lat), literal(lng))) / 1000.0
 
     def within_km(self, lat: float, lng: float, radius_km: float):
-        if self.postgis:
-            here = _geography(literal(lat), literal(lng))
-            return func.ST_DWithin(_geography(Business.latitude, Business.longitude), here, radius_km * 1000)
-        return func.haversine_km(Business.latitude, Business.longitude, lat, lng) <= radius_km
+        here = _geography(literal(lat), literal(lng))
+        return func.ST_DWithin(_geography(Business.latitude, Business.longitude), here, radius_km * 1000)
 
 
 def open_now_clause(at: datetime | None = None):
