@@ -1,1 +1,31 @@
-{"name":"@launder/web","private":true,"version":"0.1.0","type":"module","scripts":{"dev":"vite","build":"tsc -b && vite build","test":"vitest run"},"dependencies":{"@vitejs/plugin-react":"latest","i18next":"latest","lucide-react":"latest","react":"latest","react-dom":"latest","react-i18next":"latest","react-router-dom":"latest","typescript":"latest","vite":"latest"},"devDependencies":{"@types/react":"latest","@types/react-dom":"latest","prettier":"^3.9.6","vitest":"latest"}}
+{
+  "name": "@launder/web",
+  "private": true,
+  "version": "1.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "typecheck": "tsc -b",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "i18next": "26.4.2",
+    "lucide-react": "1.41.0",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "react-i18next": "17.0.13",
+    "react-router-dom": "7.18.3"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.58.2",
+    "@types/react": "19.2.18",
+    "@types/react-dom": "19.2.7",
+    "@vitejs/plugin-react": "6.1.1",
+    "jsdom": "^27.0.0",
+    "prettier": "3.9.6",
+    "typescript": "7.0.2",
+    "vite": "8.2.2",
+    "vitest": "5.0.0"
+  }
+}

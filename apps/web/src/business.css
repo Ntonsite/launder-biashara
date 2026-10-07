@@ -647,7 +647,32 @@
   gap: 20px;
 }
 .orderTimeline {
-  display: grid;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 2px;
+  margin: 22px 0 6px;
+}
+.orderTimeline > div {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #94a3b8;
+  padding: 6px 10px 6px 6px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.orderTimeline > div.skipped {
+  text-decoration: line-through;
+  opacity: 0.6;
+}
+.orderTimeline > div i {
+  width: 24px;
+  height: 24px;
+  font-size: 11px;
+}
+.orderTimeline > div svg {
+  width: 13px;
+  height: 13px;
 }
 .orderTimeline button {
   border: 0;
