@@ -1,19 +1,20 @@
 # Test report — Phase 1
 
 Run on 2026-10-08, Windows 11, Python 3.12, Node 22, Flutter 3.41.6 / Dart 3.11, Docker 29.
+Updated the same day for the provider workspace and walk-in pass (API and web rows below re-run; mobile unchanged).
 Everything below was actually executed; nothing is extrapolated.
 
 ## Summary
 
 | Suite | Result |
 |---|---|
-| API — pytest (isolated DB, real Alembic migration + seed) | **43 passed** |
+| API — pytest (fresh `launder_test` database on the PostGIS container, migrations 0001–0003 + seed) | **59 passed** |
 | API — ruff | clean |
-| API on PostgreSQL 16 + PostGIS 3.4 (Docker) | migration `0001` applied; `ST_DWithin` uses `ix_businesses_geog` (Index Scan); Redis rate limiting active |
+| API on PostgreSQL 16 + PostGIS 3.4 (Docker) | migrations to `0003` applied over existing data (backfill checked: every order has a promised time, every paid payment a `paid_at`); `ST_DWithin` uses `ix_businesses_geog`; overdue/pipeline counts use `ix_orders_business_status`; Redis rate limiting active |
 | Web — TypeScript (`tsc -b`) | clean |
-| Web — Vitest | **12 passed** |
+| Web — Vitest | **15 passed** |
 | Web — production build | OK (main bundle 119 KB gzip; business/admin lazy-loaded) |
-| Web — Playwright E2E, Chromium, against Docker API | **4 passed** (desktop journey, Swahili desktop + Pixel 7, admin review) |
+| Web — Playwright E2E, Chromium, against Docker API | **8 passed** (customer journey, Swahili desktop + Pixel 7, admin review, walk-in counter, dashboard click-through + reports, staff role, phone dashboard in Swahili); provider tests also passed with `--repeat-each=2` |
 | Web — Docker image (nginx) | builds; serves app, proxies `/api` and `/media`, SPA deep links |
 | Mobile — `flutter analyze` | no issues |
 | Mobile — `flutter test` (unit, repository, widget, layout) | **35 passed** |
@@ -42,10 +43,41 @@ Everything below was actually executed; nothing is extrapolated.
   owner adds staff; dashboard uses real commission; review moderation recomputes rating; revenue excludes
   unpaid.
 
+## Provider workspace and walk-in (API)
+
+* `test_business_ops.py` (13) — period maths (month-to-date vs same days of a shorter month, finished months,
+  same weekday last week, Monday weeks, custom validation); setup checklist instead of zeros; dashboard keeps
+  sales, collections and outstanding apart (an old order paid today is collected today, not sold today);
+  promised time from the slowest service; discounts; day book (opening, new, carried forward); overdue and
+  due-today drive attention items, order views, counts and sorting; ready-late lowers on-time rate; comparisons
+  only with ≥ 5 orders; roles (cashier takes orders and money but cannot wash, staff cannot create orders, see
+  money, customers or reports, manager gets daily but not monthly, driver sees only pickups); CRM spend,
+  segments, preferred services, add customer is idempotent and does not rename; Swahili CSV header and
+  an orders export of all 600+ orders (not capped at 100); invalid period; close day with counted cash,
+  variance, no double close, no future close, nothing locked; manual mobile money reference unique.
+* `test_walk_in.py` (4) — guest walk-in with per-item, per-kg and package lines (TZS 31,000), starts at
+  `RECEIVED`, full workflow, collection refused while unpaid then taken with the balance, no commission row,
+  counted in the day report as walk-in sales and cash but not as a customer; part payment by mobile money →
+  `PARTIAL`, balance owed on the dashboard, over-payment refused, balance in cash at collection, both payments
+  in the day report, named walk-in customer has a history; paid in full at drop-off; existing customer by id;
+  whole package units; phone orders need a phone; another laundry cannot use this laundry's customer; one
+  shared guest record per laundry.
+
 ## Web
 
 * Vitest: catalog parity EN/SW, no untranslated Swahili, every `t("…")` key exists, no inline language
   conditionals; cart totals/kg/replace/persistence; API client refresh-once, refresh failure, error mapping.
+* Provider E2E (`e2e/business.spec.ts`): owner dashboard → *New walk-in order* → three shirts and a trouser
+  by tapping tiles → name only → part paid TZS 4,000 → *Create & print slip* → slip shows the order number,
+  balance TZS 5,000 and prints → order page → Washing … Ready → *Take TZS 5,000 & hand over* → Completed →
+  end-of-day report shows the extra walk-in → CSV downloads → the order is searchable by number.
+  Overdue attention item → orders filtered `due=overdue` with "late" badges; pipeline stage → status filter;
+  monthly report renders. Staff see orders but no Reports, Payments, Customers, Settings or sales. Pixel 7 in
+  Swahili: attention above today's figures, no horizontal scroll.
+* These runs found and fixed real bugs: pages read the role/profile outside the workspace frame and got
+  nothing (buttons hidden for every role, slip without the laundry's name); order rows marked `role="row"` lost
+  their link semantics; the site header/footer styles leaked into the report header and slip; a legacy `.bars`
+  rule broke the charts; the payments list showed full totals for part-paid orders.
 * Playwright found and drove the fix for one real bug: after OTP, first-time customers skipped the name
   step at checkout (the order would have failed). Fixed in `customer/SignIn.tsx` and page guards.
 
@@ -79,11 +111,13 @@ Everything below was actually executed; nothing is extrapolated.
 * Real SMS and mobile-money providers (not integrated in Phase 1; sandbox only).
 * Push notifications (no credentials).
 * Load/performance testing beyond query plans and bundle sizes.
+* Printing on a physical receipt printer (the slip was verified in the browser print path only).
 
 ## How to run
 
 ```bash
 # API
+docker compose up -d postgres redis   # tests create a fresh launder_test database on this server
 cd apps/api && pip install -r requirements-dev.txt && python -m pytest && ruff check .
 # Web
 cd apps/web && npm ci && npm run typecheck && npm test && npm run build

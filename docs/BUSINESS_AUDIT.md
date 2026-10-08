@@ -62,3 +62,18 @@ Several figures were also subtly wrong.
   showing the same charts would disagree.
 * **Branch filter deferred.** The schema has a `branches` table but orders are not yet assigned to branches;
   reports show the business location as the branch. Multi-branch is Phase 2.
+
+## Walk-in flow audit (second request)
+
+Already working before this pass: counter orders priced on the server (per item / per kg), customer found or
+created by phone, `source = WALK_IN`, commission charged only on `MARKETPLACE` orders, readable order numbers.
+
+| Gap | Resolution |
+|---|---|
+| A phone number and name were required — no anonymous walk-in | Optional customer: pick an existing one, type a phone to add someone, type just a name (kept on the order for the slip), or nothing. Guests share one per-laundry record that stays out of the CRM and customer metrics |
+| Walk-ins started at `ACCEPTED`, although the clothes are already in the shop | Walk-in drop-offs start at `RECEIVED`; phone/WhatsApp orders still wait at `ACCEPTED` |
+| Payment was all-or-nothing, cash only at the counter | Pay later, in full or in part, by cash or mobile money (with reference), at creation or any time after; `PARTIAL` status and `amount_paid`; outstanding uses the balance |
+| No package pricing | `PACKAGE` pricing model (fixed-price bundles, whole units) |
+| Handing over took two status changes and a separate payment | One "collected" action takes the balance and moves `READY → DELIVERED → COMPLETED` (the state machine is unchanged) |
+| No slip | Printable order slip (80 mm or A4): laundry, order number, items, total, paid, balance, ready-by time |
+| The form needed several typed fields | Service tiles, defaults for everything, sticky total and *Create & print slip*: a normal walk-in is "tap services → Create" |

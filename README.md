@@ -12,7 +12,7 @@ Laundry Business SaaS + Laundry Marketplace for Tanzania. English and Kiswahili.
 | Web: marketplace, account, Business, Admin (React) | `apps/web` |
 | Customer mobile app (Flutter) | `../../mobile/launder` |
 | Brand assets generator | `brand/generate.py` |
-| Docs | `docs/` — start with [IMPLEMENTATION_STATUS.md](docs/IMPLEMENTATION_STATUS.md) |
+| Docs | `docs/` — start with [IMPLEMENTATION_STATUS.md](docs/IMPLEMENTATION_STATUS.md); figures and roles in [ANALYTICS.md](docs/ANALYTICS.md) |
 
 ## Run everything with Docker
 
@@ -43,7 +43,7 @@ npm run dev                               # proxies /api and /media to 127.0.0.1
 | Who | Sign in |
 |---|---|
 | Customer | Any Tanzanian mobile number; the one-time code is shown in development |
-| FreshWash Laundry (marketplace, live) | `owner@freshwash.co.tz` / `Demo123!` · staff `staff@freshwash.co.tz` / `Demo123!` |
+| FreshWash Laundry (marketplace, live; ten weeks of trading history) | `owner@freshwash.co.tz` / `Demo123!` · staff `staff@freshwash.co.tz` / `Demo123!` |
 | T-Laundry (marketplace application pending review) | `owner@t-laundry.co.tz` / `Demo123!` |
 | Other live laundries | `owner@cleanpro.co.tz`, `owner@safilaundry.co.tz`, `owner@bahari.co.tz`, `owner@upangaexpress.co.tz` / `Demo123!` |
 | Platform admin | `admin@launder.co.tz` / `Admin123!` |

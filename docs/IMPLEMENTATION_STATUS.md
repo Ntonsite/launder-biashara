@@ -1,6 +1,6 @@
 # Phase 1 — implementation status
 
-Updated 2026-10-08. "Before" is the state recorded in [PHASE_1_AUDIT.md](PHASE_1_AUDIT.md).
+Updated 2026-10-08 (provider workspace and walk-in pass). "Before" is the state recorded in [PHASE_1_AUDIT.md](PHASE_1_AUDIT.md).
 
 ## Customer journey
 
@@ -23,17 +23,22 @@ Updated 2026-10-08. "Before" is the state recorded in [PHASE_1_AUDIT.md](PHASE_1
 
 ## Business journey
 
-| Step | Status |
+Audit and decisions: [BUSINESS_AUDIT.md](BUSINESS_AUDIT.md). Definitions: [ANALYTICS.md](ANALYTICS.md).
+
+| Area | Status |
 |---|---|
-| Register → onboarding (profile & location, hours, services) | Done — writes real profile/hours/services |
-| Services & pricing | Done — categories, per item / per kg, archive instead of delete |
-| Staff | Done — owner adds managers/staff; staff can process orders but not manage team or settings |
-| Customers | Done — searchable, shows who uses the app |
-| Manual (counter) orders | Done — priced from services |
-| Order processing | Done — only valid next steps offered; reasons for decline/cancel; cash payment recording |
-| Dashboard | Done — real figures (paid revenue, unpaid, today, ready, source mix, commission) |
+| Register → onboarding (profile & location, hours, services) | Done — writes real profile/hours/services; dashboard setup checklist continues to first order, team, Marketplace |
+| Dashboard | Done — needs attention (overdue, Marketplace to accept, due today, stuck mobile money, pickups, deliveries, money owed, uncollected), today with comparisons, stage pipeline, month-to-date performance, 30-day trend, Marketplace, customers, insights; every figure clickable; role-aware |
+| Walk-in counter | Done — optional customer (existing / new by phone / guest with a name / nobody), service tiles (per item, per kg, package), promised time, discount, pay later / full / part (cash or mobile money), order slip, straight into `RECEIVED`, one-step collection |
+| Orders | Done — views with counts, overdue / due today / uncollected, date, source, payment filters, items and due on rows, full CSV export, promised time editable |
+| Customers (CRM) | Done — segments (new, returning, frequent, not seen in 45 days, owes money), spend, average, last order, preferred services, notes, add customer |
+| Payments | Done — sales vs collected vs outstanding vs refunded by period, who owes what, record cash / mobile money (full or part) |
+| Reports | Done — end of day (with close-day cash count), weekly, monthly, sales, orders, customers, Marketplace, payments; any period incl. custom; print / save as PDF; CSV |
+| Roles | Done — owner, manager, cashier, staff, driver; enforced by the API, reflected in navigation |
+| Services & pricing | Done — categories, per item / per kg / package, archive instead of delete |
+| Staff | Done — owner adds managers, cashiers, staff, drivers |
 | Join marketplace | Done — readiness checklist → application → admin review |
-| Marketplace orders and commission | Done — same order list; commission accrued on completion |
+| Marketplace orders and commission | Done — same order list; commission accrued on completion, Marketplace only |
 
 ## Admin
 
@@ -45,7 +50,7 @@ with actor and metadata. All enforced by backend RBAC.
 
 | Area | Status |
 |---|---|
-| PostgreSQL + PostGIS | Alembic migration with geography GIST index; validated on `postgis/postgis:16-3.4` |
+| PostgreSQL + PostGIS | The only supported database (dev, tests, Docker). Migrations 0001–0003; geography GIST index and analytics indexes |
 | Redis | Rate limiting (login, OTP) with in-process fallback |
 | Auth | Access 30 min + rotating refresh with reuse detection; OTP 5 min, 5 attempts, 60 s resend, 5 per 15 min |
 | Errors, logs, health | Error envelope with request id; JSON logs; `/health`, `/health/ready` |
@@ -65,9 +70,13 @@ with actor and metadata. All enforced by backend RBAC.
 7. **iOS build** — not built here (Windows); configuration is in place.
 8. **Release signing** — create the upload keystore and `android/key.properties`.
 9. **Address on map** — customers can pin current GPS; picking a point on a map is Phase 2.
+10. **Package services in the customer app** — the Flutter app lists `PACKAGE` services and orders them in whole
+    units, but shows the price without a "per package" label (web shows it). Small app update.
+11. **Thermal printers** — slips print through the browser (80 mm layout); direct ESC/POS printing is not built.
 
 ## Phase 2 (not Phase 1)
 
 Live rider tracking; in-app chat with the laundry; subscription/bundle pricing; loyalty and promo codes;
 card payments; multi-branch businesses; business mobile app; payouts and commission invoicing; review
-replies; laundry photo galleries; WebSocket/SSE order updates; analytics exports.
+replies; laundry photo galleries; WebSocket/SSE order updates; branch-level reporting; period locking / accounting
+adjustments; scheduled report e-mails.
