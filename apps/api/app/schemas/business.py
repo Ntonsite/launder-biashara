@@ -122,6 +122,8 @@ class MarketplaceApplication(BaseModel):
     tin: str = Field(default="", max_length=30)
     pickup_radius_km: float = Field(default=8, ge=1, le=30)
     accept_terms: bool
+    # Optional: agree now to continue at the standard terms when the trial ends (otherwise asked at the end).
+    accept_post_trial: bool = False
 
     @field_validator("accept_terms")
     @classmethod
@@ -129,3 +131,10 @@ class MarketplaceApplication(BaseModel):
         if not v:
             raise ValueError("Marketplace terms must be accepted")
         return v
+
+
+class MarketplaceDraft(BaseModel):
+    contact_name: str | None = Field(default=None, max_length=120)
+    registration_number: str | None = Field(default=None, max_length=60)
+    tin: str | None = Field(default=None, max_length=30)
+    pickup_radius_km: float | None = Field(default=None, ge=1, le=30)

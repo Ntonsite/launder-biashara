@@ -79,11 +79,15 @@ class PricingAdmin:
         self.db, self.actor = db, actor
 
     # ---- settings -------------------------------------------------------------------------------------------------
-    def set_setting(self, key: str, value, reason: str) -> None:
-        if key not in SETTINGS:
+    def set_setting(self, key: str, value, reason: str, commit: bool = True) -> None:
+        from .marketplace_program import MARKETPLACE_SETTINGS, normalize_setting
+
+        registry = {**SETTINGS, **{k: v[:2] for k, v in MARKETPLACE_SETTINGS.items()}}
+        if key not in registry:
             raise AppError(404, "NOT_FOUND", "Unknown setting")
-        if not SETTINGS[key][0](value):
-            raise AppError(422, "INVALID_VALUE", f"Invalid value for {SETTINGS[key][1]}")
+        if not registry[key][0](value):
+            raise AppError(422, "INVALID_VALUE", f"Invalid value for {registry[key][1]}")
+        value = normalize_setting(key, value)
         row = self.db.get(PlatformSetting, key)
         before = json.loads(row.value_json) if row else None
         if row is None:
@@ -91,7 +95,8 @@ class PricingAdmin:
             self.db.add(row)
         row.value_json, row.updated_by = json.dumps(value), self.actor.id
         pricing_audit(self.db, self.actor, "SETTING_CHANGED", "setting", key, {"value": before}, {"value": value}, reason)
-        self.db.commit()
+        if commit:
+            self.db.commit()
 
     # ---- plans ----------------------------------------------------------------------------------------------------
     def create_plan(self, data: dict, prices: dict[str, int], features: dict[str, bool], reason: str) -> SubscriptionPlan:
@@ -176,10 +181,12 @@ class PricingAdmin:
     # ---- commission rules -----------------------------------------------------------------------------------------
     def create_rule(self, scope: str, business_id: str | None, rate: Decimal, min_commission: int, include_pickup_fee: bool,
                     discounts_reduce_basis: bool, effective_from: datetime | None, effective_to: datetime | None,
-                    reason: str) -> CommissionRule:
+                    reason: str, commit: bool = True, agreement_id: str | None = None,
+                    allow_past: bool = False) -> CommissionRule:
+        """`allow_past` is only for the lifecycle job starting a trial at the moment it became due."""
         start = as_utc(effective_from) if effective_from else now_utc()
         end = as_utc(effective_to) if effective_to else None
-        if start < now_utc() - timedelta(minutes=5):
+        if not allow_past and start < now_utc() - timedelta(minutes=5):
             raise AppError(422, "BACKDATED_RULE", "Commission rules cannot start in the past; historical orders keep their terms")
         if end and end <= start:
             raise AppError(422, "INVALID_WINDOW", "The end date must be after the start date")
@@ -211,15 +218,19 @@ class PricingAdmin:
                 previous.effective_to = start  # the old terms stop exactly when the new ones start
         rule = CommissionRule(scope=scope, business_id=business_id, rate=rate, min_commission=min_commission,
                               include_pickup_fee=include_pickup_fee, discounts_reduce_basis=discounts_reduce_basis,
-                              effective_from=start, effective_to=end, reason=reason, created_by=self.actor.id)
+                              effective_from=start, effective_to=end, reason=reason, agreement_id=agreement_id,
+                              created_by=self.actor.id if self.actor else None)
         self.db.add(rule)
         self.db.flush()
         pricing_audit(self.db, self.actor, "COMMISSION_RULE_CREATED", "commission_rule", rule.id,
                       snapshot(previous, RULE_FIELDS) if previous else None, snapshot(rule, RULE_FIELDS), reason, business_id)
-        self.db.commit()
+        if commit:
+            self.db.commit()
         return rule
 
     def end_rule(self, rule: CommissionRule, at: datetime | None, reason: str) -> CommissionRule:
+        if rule.agreement_id:
+            raise AppError(409, "TRIAL_RULE", "This rate belongs to a Marketplace trial; end or extend the trial instead")
         if rule.scope == "DEFAULT":
             raise AppError(409, "DEFAULT_RULE_REQUIRED", "Replace the default rate with a new one instead of ending it")
         end = max(as_utc(at) if at else now_utc(), now_utc())

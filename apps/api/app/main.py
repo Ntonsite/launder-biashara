@@ -16,6 +16,7 @@ from .core.logging import RequestContextMiddleware, configure_logging
 from .database import SessionLocal, get_db
 from .routers import (
     admin,
+    admin_marketplace,
     admin_monetization,
     auth,
     business,
@@ -100,5 +101,5 @@ def ready(db: Session = Depends(get_db)):
 
 
 for router in (auth.router, marketplace.router, customer.router, business.router, business_reports.router,
-               business_billing.router, admin.router, admin_monetization.router, payments.router):
+               business_billing.router, admin.router, admin_marketplace.router, admin_monetization.router, payments.router):
     app.include_router(router, prefix="/api/v1")

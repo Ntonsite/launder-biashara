@@ -24,6 +24,7 @@ from ..schemas.business import (
     CustomerNotes,
     HoursUpdate,
     MarketplaceApplication,
+    MarketplaceDraft,
     OnboardingUpdate,
     OrderUpdate,
     PaymentRecord,
@@ -33,10 +34,11 @@ from ..schemas.business import (
 from ..schemas.orders import StatusChange
 from ..services.analytics import DUE_SOON_HOURS, LIVE, PRE_READY, BusinessAnalytics, avg_int
 from ..services.audit import audit
-from ..services.business import BusinessProfileService, BusinessRegistrationService, marketplace_status_out
+from ..services.business import BusinessProfileService, BusinessRegistrationService
 from ..services.entitlements import require_feature
 from ..services.entitlements import resolve as resolve_plan
 from ..services.marketplace import hours_out, service_out
+from ..services.marketplace_program import MarketplaceProgram
 from ..services.orders import OrderService, ensure_business_customer, order_detail
 from ..services.payments import PaymentService, payment_out
 from ..services.report_export import orders_csv
@@ -396,14 +398,34 @@ def payments(period: str = Query("today", max_length=20), start: date | None = N
 @router.get("/marketplace")
 def marketplace(ctx: BusinessContext = Depends(business_context), db: Session = Depends(get_db)):
     ctx.require("marketplace.view")
-    return marketplace_status_out(db, ctx.business)
+    return MarketplaceProgram(db).provider_view(ctx.business)
+
+
+@router.put("/marketplace/application")
+def save_application(payload: MarketplaceDraft, ctx: BusinessContext = Depends(business_context), db: Session = Depends(get_db)):
+    """Save an unfinished application; nothing is submitted."""
+    ctx.require_owner()
+    program = MarketplaceProgram(db, ctx.user)
+    program.save_draft(ctx.business, payload.model_dump(exclude_unset=True))
+    return program.provider_view(ctx.business)
 
 
 @router.post("/marketplace/application")
 def apply(payload: MarketplaceApplication, ctx: BusinessContext = Depends(business_context), db: Session = Depends(get_db)):
+    """Submit (or confirm an invitation). The owner accepts the Marketplace terms shown on the page."""
     ctx.require_owner()
-    BusinessProfileService(db).apply_to_marketplace(ctx.business, payload, ctx.user)
-    return marketplace_status_out(db, ctx.business)
+    program = MarketplaceProgram(db, ctx.user)
+    program.submit(ctx.business, payload.model_dump())
+    return program.provider_view(ctx.business)
+
+
+@router.post("/marketplace/accept-terms")
+def accept_terms(ctx: BusinessContext = Depends(business_context), db: Session = Depends(get_db)):
+    """Accept the standard Marketplace terms: after an expired trial (reactivates new orders) or in advance."""
+    ctx.require_owner()
+    program = MarketplaceProgram(db, ctx.user)
+    program.accept_standard_terms(ctx.business)
+    return program.provider_view(ctx.business)
 
 
 @router.get("/reviews")

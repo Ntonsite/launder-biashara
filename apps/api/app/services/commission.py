@@ -4,6 +4,12 @@ When is commission earned?  When a Marketplace order is COMPLETED (completion al
 Which terms apply?          The rule in force when the order was *placed* (snapshotted on the order), so later rule
                             changes never re-price an order. Precedence at placement: this laundry's promotion >
                             this laundry's rate > a promotion for all laundries > the default.
+Trials?                     A Marketplace trial is a promotion for one laundry tied to its agreement. A trial never
+                            makes a laundry pay more than it would without it: while a trial runs, the lower of the
+                            trial rate and the laundry's standard rate (its own rate, else a promotion for all, else
+                            the default) applies. So a special rate never takes away a promised trial, and a trial
+                            never takes away a better special rate. Admins cannot add another promotion for the
+                            laundry over a trial's dates.
 What is the basis?          The laundry services subtotal, less discounts unless the rule says otherwise, plus the pickup
                             fee only if the rule includes it. A minimum commission never exceeds the basis.
 Refunds?                    Refunding a completed order's payment writes one REVERSED entry for the full earned amount.
@@ -23,7 +29,7 @@ from sqlalchemy.orm import Session
 from ..core.errors import AppError
 from ..domain.clock import now_utc
 from ..domain.money import percentage_of
-from ..models import Commission, CommissionRule, Order
+from ..models import Commission, CommissionRule, MarketplaceAgreement, Order
 
 ELIGIBLE_SOURCES = {"MARKETPLACE"}
 
@@ -35,6 +41,8 @@ class Calculation:
     basis: int
     amount: int
     detail: dict
+    waived: int = 0
+    agreement_id: str | None = None
 
     @property
     def laundry_amount(self) -> int:
@@ -50,7 +58,7 @@ class CommissionService:
     def __init__(self, db: Session):
         self.db = db
 
-    def rule_for(self, business_id: str, at: datetime | None = None) -> CommissionRule:
+    def rule_for(self, business_id: str, at: datetime | None = None, include_trials: bool = True) -> CommissionRule:
         at = at or now_utc()
         candidates = [
             (CommissionRule.scope == "PROMOTION", CommissionRule.business_id == business_id),
@@ -59,8 +67,13 @@ class CommissionService:
             (CommissionRule.scope == "DEFAULT", CommissionRule.business_id.is_(None)),
         ]
         for scope, owner in candidates:
-            rule = self.db.scalar(select(CommissionRule).where(scope, owner, _in_force(at))
-                                  .order_by(CommissionRule.effective_from.desc()))
+            stmt = select(CommissionRule).where(scope, owner, _in_force(at))
+            if not include_trials:
+                stmt = stmt.where(CommissionRule.agreement_id.is_(None))
+            rule = self.db.scalar(stmt.order_by(CommissionRule.effective_from.desc()))
+            if rule and rule.agreement_id:
+                standard = self.rule_for(business_id, at, include_trials=False)
+                return standard if Decimal(standard.rate) < Decimal(rule.rate) else rule
             if rule:
                 return rule
         raise AppError(500, "NO_COMMISSION_RULE", "No default Marketplace commission is configured")
@@ -82,15 +95,27 @@ class CommissionService:
         """Called when a Marketplace order is placed: fixes the terms it will be charged under."""
         if order.source not in ELIGIBLE_SOURCES:
             return
-        rule = self.rule_for(order.business_id, order.created_at or now_utc())
+        at = order.created_at or now_utc()
+        rule = self.rule_for(order.business_id, at)
+        standard = rule if not rule.agreement_id else self.rule_for(order.business_id, at, include_trials=False)
         order.commission_rule_id, order.commission_rate = rule.id, Decimal(rule.rate)
+        order.commission_standard_rate = Decimal(standard.rate)
+        order.marketplace_agreement_id = self.db.scalar(select(MarketplaceAgreement.id).where(
+            MarketplaceAgreement.business_id == order.business_id, MarketplaceAgreement.status == "ACTIVE"))
 
     def preview(self, order: Order) -> Calculation | None:
         if order.source not in ELIGIBLE_SOURCES:
             return None
         rule = self.db.get(CommissionRule, order.commission_rule_id) if order.commission_rule_id else None
         rule = rule or self.rule_for(order.business_id, order.created_at)
-        return self.calculate(rule, order.subtotal, order.discount, order.delivery_fee)
+        calc = self.calculate(rule, order.subtotal, order.discount, order.delivery_fee)
+        if rule.agreement_id and order.commission_standard_rate is not None:
+            # Waived = the standard rate on the same basis, minus what the trial charges.
+            calc.waived = max(percentage_of(calc.basis, Decimal(order.commission_standard_rate)) - calc.amount, 0)
+            calc.agreement_id = rule.agreement_id
+            calc.detail = {**calc.detail, "trial": True, "standard_rate": str(order.commission_standard_rate),
+                           "waived": calc.waived}
+        return calc
 
     def earn(self, order: Order) -> Commission | None:
         calc = self.preview(order)
@@ -100,6 +125,7 @@ class CommissionService:
             return None  # idempotent
         entry = Commission(order_id=order.id, business_id=order.business_id, entry_type="EARNED", rule_id=calc.rule_id,
                            rate=calc.rate, base_amount=calc.basis, amount=calc.amount, basis_json=json.dumps(calc.detail),
+                           waived_amount=calc.waived, agreement_id=calc.agreement_id or order.marketplace_agreement_id,
                            status="ACCRUED")
         return self._add(entry)
 
@@ -111,6 +137,7 @@ class CommissionService:
             return None
         entry = Commission(order_id=order.id, business_id=order.business_id, entry_type="REVERSED", rule_id=earned.rule_id,
                            rate=earned.rate, base_amount=earned.base_amount, amount=-earned.amount, status="REVERSED",
+                           waived_amount=-earned.waived_amount, agreement_id=earned.agreement_id,
                            basis_json=json.dumps({"reverses": earned.id, "reason": reason}))
         return self._add(entry)
 
@@ -127,5 +154,6 @@ class CommissionService:
 def commission_terms(rule: CommissionRule) -> dict:
     """Provider-facing description of the terms (no internal codes)."""
     return {"rate": float(rule.rate), "minimum": rule.min_commission, "includes_pickup_fee": rule.include_pickup_fee,
-            "discounts_reduce_basis": rule.discounts_reduce_basis, "kind": rule.scope.lower(),
+            "discounts_reduce_basis": rule.discounts_reduce_basis,
+            "kind": "trial" if rule.agreement_id else rule.scope.lower(),
             "until": rule.effective_to.isoformat() if rule.effective_to else None}

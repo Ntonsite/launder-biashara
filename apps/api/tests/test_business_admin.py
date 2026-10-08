@@ -56,7 +56,9 @@ def test_new_business_is_not_listed_until_approved(client, admin):
     detail = client.get(f"/api/v1/admin/marketplace-applications/{app_id}", headers=admin).json()
     assert all(c["done"] for c in detail["checklist"]) and detail["services"][0]["price"] == 1800
 
-    assert client.post(f"/api/v1/admin/marketplace-applications/{app_id}/approve", json={}, headers=admin).json()["status"] == "ACTIVE"
+    # Approval starts the default commission-free trial (the Marketplace is open in the demo settings).
+    approved = client.post(f"/api/v1/admin/marketplace-applications/{app_id}/approve", json={}, headers=admin).json()
+    assert approved["status"] == "TRIAL_ACTIVE"
     assert client.get(f"/api/v1/marketplace/laundries/{slug}").status_code == 200
 
     # Decisions follow explicit rules.
@@ -67,7 +69,7 @@ def test_new_business_is_not_listed_until_approved(client, admin):
     assert client.get(f"/api/v1/marketplace/laundries/{slug}").status_code == 404
 
     logs = client.get("/api/v1/admin/audit-logs", headers=admin).json()["items"]
-    assert logs[0]["action"] == "MARKETPLACE_SUSPEND" and logs[0]["actor"] == "admin@launder.co.tz"
+    assert logs[0]["action"] == "MARKETPLACE_SUSPENDED" and logs[0]["actor"] == "admin@launder.co.tz"
 
 
 def test_rbac_is_enforced_server_side(client):

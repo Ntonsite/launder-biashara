@@ -64,7 +64,9 @@ def live_marketplace_laundry(client, admin):
     apps = client.get("/api/v1/admin/marketplace-applications", params={"status": "PENDING_REVIEW", "page_size": 100},
                       headers=admin).json()["items"]
     app_id = next(a["id"] for a in apps if a["slug"] == profile["slug"])
-    assert client.post(f"/api/v1/admin/marketplace-applications/{app_id}/approve", json={}, headers=admin).status_code == 200
+    # Standard terms (no trial) so these scenarios exercise the default 5 %; trials are covered in test_marketplace_program.
+    assert client.post(f"/api/v1/admin/marketplace-applications/{app_id}/approve", json={"skip_trial": True},
+                       headers=admin).status_code == 200
     return headers, profile["slug"], profile["id"], services
 
 
@@ -330,7 +332,8 @@ def test_marketplace_follows_plan_eligibility_when_admin_restricts_it(client, ad
         with SessionLocal() as db:
             BillingService(db).run()
             account = db.scalar(select(MarketplaceAccount).where(MarketplaceAccount.business_id == bid))
-            assert (account.status, account.rejection_reason) == ("SUSPENDED", PLAN_PAUSE_REASON)
+            assert (account.status, account.listing_status, account.status_reason) == ("SUSPENDED", "PAUSED_PLAN",
+                                                                                       PLAN_PAUSE_REASON)
         assert client.get(f"/api/v1/marketplace/laundries/{slug}").status_code == 404
     finally:
         client.put(f"{API}/plans/{starter['id']}/features", headers=finance,

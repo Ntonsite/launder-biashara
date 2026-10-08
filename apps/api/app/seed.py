@@ -21,6 +21,7 @@ from .models import (
     Commission,
     Customer,
     MarketplaceAccount,
+    MarketplaceAgreement,
     Order,
     OrderItem,
     OrderStatusEvent,
@@ -30,6 +31,7 @@ from .models import (
     User,
 )
 from .seed_commercial import seed_commercial
+from .seed_marketplace import seed_marketplace
 from .seed_operations import seed_operating_history
 from .services.orders import new_order_number
 from .services.reviews import recompute_rating
@@ -155,7 +157,8 @@ def seed(db) -> bool:
     """Base demo data once; FreshWash's operating history is added separately (also to databases seeded earlier)."""
     created = _seed_base(db)
     history = seed_operating_history(db)
-    return seed_commercial(db) or history or created
+    commercial = seed_commercial(db)
+    return seed_marketplace(db) or commercial or history or created
 
 
 def _seed_base(db) -> bool:
@@ -196,9 +199,18 @@ def _seed_base(db) -> bool:
         db.add_all(services)
         submitted = now_utc() - timedelta(days=60 if mp_status == "ACTIVE" else 2)
         # Commission terms are versioned rules (migration 0004 + seed_commercial), not account fields.
+        live = mp_status == "ACTIVE"
         db.add(MarketplaceAccount(business_id=business.id, status=mp_status, pickup_radius_km=Decimal("8"),
-                                  contact_name=owner_name, submitted_at=submitted,
-                                  approved_at=submitted + timedelta(days=1) if mp_status == "ACTIVE" else None))
+                                  contact_name=owner_name, submitted_at=submitted, terms_accepted_at=submitted,
+                                  review_status="APPROVED" if live else mp_status,
+                                  commercial_status="STANDARD" if live else "NONE",
+                                  listing_status="LISTED" if live else "HIDDEN", launch_cohort=live,
+                                  first_listed_at=submitted + timedelta(days=1) if live else None,
+                                  approved_at=submitted + timedelta(days=1) if live else None))
+        if live:  # the launch laundries joined on the standard terms
+            db.add(MarketplaceAgreement(business_id=business.id, version=1, kind="STANDARD", status="ACTIVE",
+                                        source="DEFAULT_POLICY", starts_at=submitted + timedelta(days=1),
+                                        accepted_at=submitted, terms_json='{"note": "Launch laundry"}'))
         db.add(BusinessOnboarding(business_id=business.id, current_step=9, completed=True))
         db.flush()
         _history(db, business, services, customers, rng, count=14 if slug != "t-laundry-mikocheni" else 24,

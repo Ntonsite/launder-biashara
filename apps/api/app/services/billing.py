@@ -342,28 +342,11 @@ class BillingService:
                     stats["past_due"] += 1
         stats["pilots_ended"], reminders = self._pilots(at, remind)
         stats["reminders"] += reminders
-        stats["marketplace_paused"], stats["marketplace_restored"] = self._marketplace_eligibility(at)
+        from .marketplace_program import MarketplaceProgram
+
+        stats.update(MarketplaceProgram(self.db).run(at, commit=False))
         self.db.commit()
         return stats
-
-    def _marketplace_eligibility(self, at: datetime) -> tuple[int, int]:
-        """Listings follow plan eligibility automatically. Only pauses made by this rule are undone by it;
-        suspensions decided by an administrator are never lifted here."""
-        from .entitlements import resolve
-
-        paused = restored = 0
-        for account in list(self.db.scalars(select(MarketplaceAccount).where(MarketplaceAccount.status.in_(("ACTIVE", "SUSPENDED"))))):
-            eligible = "marketplace_eligible" in resolve(self.db, account.business_id, at).features
-            business = self.db.get(Business, account.business_id)
-            if account.status == "ACTIVE" and not eligible:
-                account.status, account.rejection_reason = "SUSPENDED", PLAN_PAUSE_REASON
-                notify_owner(self.db, business, "MARKETPLACE_PAUSED", f"{account.id}:{at.date()}")
-                paused += 1
-            elif account.status == "SUSPENDED" and account.rejection_reason == PLAN_PAUSE_REASON and eligible:
-                account.status, account.rejection_reason = "ACTIVE", None
-                notify_owner(self.db, business, "MARKETPLACE_RESTORED", f"{account.id}:{at.date()}")
-                restored += 1
-        return paused, restored
 
     def _pilots(self, at: datetime, remind: timedelta) -> tuple[int, int]:
         ended = reminders = 0

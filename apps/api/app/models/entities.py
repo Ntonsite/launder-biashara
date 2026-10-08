@@ -141,8 +141,27 @@ class MarketplaceAccount(Base):
     __tablename__ = "marketplace_accounts"
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uuid)
     business_id: Mapped[str] = mapped_column(ForeignKey("businesses.id"), unique=True, index=True)
-    # NOT_ENROLLED → PENDING_REVIEW → ACTIVE | REJECTED;  ACTIVE ⇄ SUSPENDED;  REJECTED → PENDING_REVIEW
+    # Summary shown to people, derived from the three separate states below (services/marketplace_program.py):
+    # NOT_ENROLLED | INVITED | DRAFT | PENDING_REVIEW | CHANGES_REQUESTED | REJECTED | APPROVED | TRIAL_ACTIVE | ACTIVE
+    # | TRIAL_EXPIRED | SUSPENDED
     status: Mapped[str] = mapped_column(String(20), index=True, default="NOT_ENROLLED")
+    # Application review: NOT_ENROLLED | INVITED | DRAFT | PENDING_REVIEW | CHANGES_REQUESTED | APPROVED | REJECTED
+    review_status: Mapped[str] = mapped_column(String(20), default="NOT_ENROLLED")
+    # Commercial terms: NONE | TRIAL (trial agreement pending or running) | STANDARD | EXPIRED (trial over, not accepted)
+    commercial_status: Mapped[str] = mapped_column(String(10), default="NONE")
+    # Public listing: HIDDEN | LISTED | SUSPENDED (admin) | PAUSED_PLAN (plan does not include Marketplace)
+    listing_status: Mapped[str] = mapped_column(String(12), default="HIDDEN")
+    # Included while the Marketplace runs as a controlled launch pilot.
+    launch_cohort: Mapped[bool] = mapped_column(Boolean, default=False)
+    terms_accepted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # The provider agreed to continue at the standard terms after the trial.
+    post_trial_accepted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    invited_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    invited_by: Mapped[str | None] = mapped_column(String(36))
+    invitation_note: Mapped[str | None] = mapped_column(String(500))
+    first_listed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    suspended_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    status_reason: Mapped[str | None] = mapped_column(String(500))
     # Commission terms live in marketplace_commission_rules (versioned), not on the account.
     pickup_radius_km: Mapped[Decimal] = mapped_column(Numeric(5, 1), default=Decimal("8"))
     contact_name: Mapped[str | None] = mapped_column(String(120))
@@ -242,6 +261,9 @@ class Order(Base):
     # never re-price an existing order.
     commission_rule_id: Mapped[str | None] = mapped_column(String(36))
     commission_rate: Mapped[Decimal | None] = mapped_column(Numeric(5, 2))
+    # The rate that would have applied without a trial (for "commission waived"), and the agreement version in force.
+    commission_standard_rate: Mapped[Decimal | None] = mapped_column(Numeric(5, 2))
+    marketplace_agreement_id: Mapped[str | None] = mapped_column(String(36))
     # Optional name written on a guest walk-in order's slip ("Mama Asha"); the customer record stays the shared guest.
     guest_name: Mapped[str | None] = mapped_column(String(120))
     # When the laundry promised the clothes would be ready. Drives "due today" and "overdue".
@@ -322,6 +344,9 @@ class Commission(Base):
     amount: Mapped[int] = mapped_column(Integer)
     # How the basis was built (services, discount, pickup fee, minimum applied) — for disputes and audits.
     basis_json: Mapped[str] = mapped_column(Text, default="{}")
+    # Commission not charged because the order was placed under a Marketplace trial (negative on a reversal).
+    waived_amount: Mapped[int] = mapped_column(Integer, default=0)
+    agreement_id: Mapped[str | None] = mapped_column(String(36))
     status: Mapped[str] = mapped_column(String(12), default="ACCRUED")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 

@@ -7,16 +7,16 @@ from sqlalchemy.orm import Session, selectinload
 
 from ..core.errors import not_found
 from ..database import get_db
-from ..dependencies import require_admin, require_pricing_role
+from ..dependencies import require_admin
 from ..domain import order_states as S
 from ..models import AuditLog, Business, Commission, Customer, MarketplaceAccount, Order, Payment, Review, Service, User
 from ..schemas.admin import MarketplaceDecision
-from ..services.admin import MarketplaceAdminService
-from ..services.business import BusinessProfileService
 from ..services.commission import CommissionService
 from ..services.marketplace import hours_out
+from ..services.marketplace_program import MarketplaceProgram
 from ..services.payments import PaymentService, payment_out
 from ..services.reviews import ReviewService
+from .admin_marketplace import apply_decision
 from .common import Page, page_params, paginate
 
 router = APIRouter(prefix="/admin", tags=["Administration"], dependencies=[Depends(require_admin)])
@@ -53,15 +53,17 @@ def businesses(q: str | None = Query(None, max_length=80), page: Page = Depends(
 def _application_out(m: MarketplaceAccount, db: Session) -> dict:
     b = m.business
     return {"id": m.id, "business_id": b.id, "business_name": b.name, "slug": b.slug, "area": b.area, "status": m.status,
+            "review_status": m.review_status, "commercial_status": m.commercial_status, "listing_status": m.listing_status,
             "commission_rate": float(CommissionService(db).rule_for(b.id).rate), "pickup_radius_km": float(m.pickup_radius_km),
             "contact_name": m.contact_name, "registration_number": m.registration_number, "tin": m.tin,
-            "submitted_at": m.submitted_at, "reviewed_at": m.reviewed_at, "rejection_reason": m.rejection_reason}
+            "submitted_at": m.submitted_at, "reviewed_at": m.reviewed_at, "rejection_reason": m.rejection_reason,
+            "status_reason": m.status_reason}
 
 
 @router.get("/marketplace-applications")
 def applications(status: str | None = Query(None, max_length=20), page: Page = Depends(page_params), db: Session = Depends(get_db)):
     stmt = (select(MarketplaceAccount).options(selectinload(MarketplaceAccount.business))
-            .where(MarketplaceAccount.status != "NOT_ENROLLED").order_by(MarketplaceAccount.submitted_at.desc()))
+            .where(MarketplaceAccount.status != "NOT_ENROLLED").order_by(MarketplaceAccount.submitted_at.desc().nulls_last()))
     if status:
         stmt = stmt.where(MarketplaceAccount.status == status)
     return paginate(db, stmt, page, lambda m: _application_out(m, db))
@@ -69,6 +71,7 @@ def applications(status: str | None = Query(None, max_length=20), page: Page = D
 
 @router.get("/marketplace-applications/{application_id}")
 def application_detail(application_id: str, db: Session = Depends(get_db)):
+    """Kept for existing clients; /admin/marketplace/providers/{business_id} has the full picture."""
     account = db.get(MarketplaceAccount, application_id)
     if not account:
         raise not_found("Application")
@@ -78,18 +81,16 @@ def application_detail(application_id: str, db: Session = Depends(get_db)):
             "latitude": b.latitude, "longitude": b.longitude, "pickup_enabled": b.pickup_enabled, "pickup_fee": b.pickup_fee,
             "hours": hours_out(b.hours)},
             "services": [{"name": s.name, "price": s.price, "pricing_model": s.pricing_model} for s in services],
-            "checklist": BusinessProfileService(db).readiness(b)}
+            "checklist": MarketplaceProgram(db).readiness(b, account)}
 
 
 @router.post("/marketplace-applications/{application_id}/{decision}")
-def decide(application_id: str, decision: Literal["approve", "reject", "suspend", "reinstate"], payload: MarketplaceDecision,
-           db: Session = Depends(get_db), actor: User = Depends(require_admin)):
-    account = db.get(MarketplaceAccount, application_id)
+def decide(application_id: str, decision: Literal["approve", "reject", "suspend", "reinstate", "request-changes", "activate"],
+           payload: MarketplaceDecision, db: Session = Depends(get_db), actor: User = Depends(require_admin)):
+    account = db.scalar(select(MarketplaceAccount).where(MarketplaceAccount.id == application_id).with_for_update())
     if not account:
         raise not_found("Application")
-    if payload.commission_rate is not None:
-        require_pricing_role(actor)
-    account = MarketplaceAdminService(db).decide(account, decision, actor, payload.reason, payload.commission_rate)
+    account = apply_decision(db, actor, account, "reactivate" if decision == "reinstate" else decision, payload)
     return {"id": account.id, "status": account.status}
 
 

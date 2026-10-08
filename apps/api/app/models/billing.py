@@ -152,6 +152,8 @@ class CommissionRule(Base):
     effective_from: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     effective_to: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     reason: Mapped[str] = mapped_column(String(255), default="")
+    # Set when the rule implements a Marketplace trial agreement (scope PROMOTION, one laundry).
+    agreement_id: Mapped[str | None] = mapped_column(String(36), index=True)
     created_by: Mapped[str | None] = mapped_column(String(36))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
@@ -227,4 +229,51 @@ class PricingAuditLog(Base):
     before_json: Mapped[str | None] = mapped_column(Text)
     after_json: Mapped[str | None] = mapped_column(Text)
     reason: Mapped[str] = mapped_column(String(255), default="")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, index=True)
+
+
+class MarketplaceAgreement(Base):
+    """One version of a laundry's Marketplace commercial terms. Never edited after it ends; changes are new versions.
+
+    kind TRIAL: commission `rate` for `duration_days`, counted from when the laundry can actually receive online orders;
+    afterwards the standard terms (`standard_rate` is what the provider was told) once accepted.
+    kind STANDARD: the laundry accepted the standard Marketplace terms (the commission rules in force).
+    status: OFFERED (invitation not yet confirmed) | PENDING_START | ACTIVE | ENDED | CANCELLED
+    """
+    __tablename__ = "marketplace_agreements"
+    __table_args__ = (Index("ix_marketplace_agreements_business", "business_id", "version"),
+                      Index("ix_marketplace_agreements_status_end", "status", "ends_at"))
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uuid)
+    business_id: Mapped[str] = mapped_column(ForeignKey("businesses.id"))
+    version: Mapped[int] = mapped_column(Integer)
+    kind: Mapped[str] = mapped_column(String(10))
+    status: Mapped[str] = mapped_column(String(14))
+    rate: Mapped[Decimal | None] = mapped_column(Numeric(5, 2))
+    standard_rate: Mapped[Decimal | None] = mapped_column(Numeric(5, 2))
+    duration_days: Mapped[int | None] = mapped_column(Integer)
+    starts_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    ends_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    extensions: Mapped[int] = mapped_column(Integer, default=0)
+    # DEFAULT_POLICY | CUSTOM (admin-set terms) | INVITATION
+    source: Mapped[str] = mapped_column(String(14), default="DEFAULT_POLICY")
+    commission_rule_id: Mapped[str | None] = mapped_column(String(36))
+    accepted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    accepted_by: Mapped[str | None] = mapped_column(String(36))
+    end_reason: Mapped[str | None] = mapped_column(String(20))  # EXPIRED | ENDED_EARLY | SUPERSEDED | CANCELLED
+    terms_json: Mapped[str] = mapped_column(Text, default="{}")  # exactly what the provider was shown
+    created_by: Mapped[str | None] = mapped_column(String(36))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class MarketplaceEvent(Base):
+    """Participation history: every review decision, invitation, activation, suspension and trial change."""
+    __tablename__ = "marketplace_events"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uuid)
+    business_id: Mapped[str] = mapped_column(ForeignKey("businesses.id"), index=True)
+    action: Mapped[str] = mapped_column(String(40))
+    from_status: Mapped[str | None] = mapped_column(String(20))
+    to_status: Mapped[str | None] = mapped_column(String(20))
+    actor_id: Mapped[str | None] = mapped_column(String(36))  # None = the scheduled lifecycle job
+    reason: Mapped[str] = mapped_column(String(500), default="")
+    data_json: Mapped[str] = mapped_column(Text, default="{}")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, index=True)

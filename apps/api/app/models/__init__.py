@@ -3,6 +3,8 @@ from .billing import (  # noqa: E402
     CommercialOverride,
     CommissionRule,
     InvoiceLine,
+    MarketplaceAgreement,
+    MarketplaceEvent,
     PilotEnrollment,
     PilotProgram,
     PlanFeature,
@@ -40,7 +42,8 @@ from .entities import (
 )
 
 __all__ = [
-    "BusinessSubscription", "CommercialOverride", "CommissionRule", "InvoiceLine", "PilotEnrollment", "PilotProgram",
+    "BusinessSubscription", "CommercialOverride", "CommissionRule", "InvoiceLine", "MarketplaceAgreement", "MarketplaceEvent",
+    "PilotEnrollment", "PilotProgram",
     "PlanFeature", "PlanPrice", "PlatformSetting", "PricingAuditLog", "SubscriptionInvoice", "SubscriptionPayment",
     "SubscriptionPlan",
     "Address", "AuditLog", "Branch", "Business", "BusinessCustomer", "BusinessHours", "BusinessOnboarding", "Commission", "Customer",

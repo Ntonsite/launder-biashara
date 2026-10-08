@@ -1,20 +1,16 @@
 import json
 import re
-from decimal import Decimal
 
-from sqlalchemy import func, select
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from ..core.errors import AppError
 from ..core.security import hash_password
-from ..domain.clock import now_utc
 from ..domain.phone import normalize_tz_phone
-from ..models import Business, BusinessHours, BusinessOnboarding, MarketplaceAccount, Service, User
+from ..models import Business, BusinessHours, BusinessOnboarding, MarketplaceAccount, User
 from ..schemas.auth import BusinessRegisterRequest
-from ..schemas.business import BusinessProfileUpdate, HoursUpdate, MarketplaceApplication, StaffCreate
+from ..schemas.business import BusinessProfileUpdate, HoursUpdate, StaffCreate
 from .audit import audit
-from .commission import CommissionService, commission_terms
-from .entitlements import require_feature
 
 DEFAULT_LAT, DEFAULT_LNG = -6.7924, 39.2083  # Dar es Salaam city centre, only until the owner sets a location
 
@@ -102,40 +98,6 @@ class BusinessProfileService:
         self.db.refresh(business)
         return business.hours
 
-    def readiness(self, business: Business) -> list[dict]:
-        """Checklist that must be complete before a business can apply to the marketplace."""
-        active_services = self.db.scalar(select(func.count(Service.id)).where(Service.business_id == business.id,
-                                                                             Service.active.is_(True))) or 0
-        return [
-            {"key": "profile", "done": bool(business.name and business.phone and business.description)},
-            {"key": "location", "done": bool(business.area and business.address and business.latitude is not None)},
-            {"key": "services", "done": active_services > 0},
-            {"key": "hours", "done": any(not h.closed for h in business.hours)},
-        ]
-
-    def apply_to_marketplace(self, business: Business, payload: MarketplaceApplication, actor: User) -> MarketplaceAccount:
-        account = self.db.scalar(select(MarketplaceAccount).where(MarketplaceAccount.business_id == business.id))
-        if account is None:
-            account = MarketplaceAccount(business_id=business.id, status="NOT_ENROLLED")
-            self.db.add(account)
-        if account.status not in ("NOT_ENROLLED", "REJECTED"):
-            raise AppError(409, "APPLICATION_EXISTS", f"Marketplace application is already {account.status}")
-        # Admins decide (per plan) whether Marketplace needs a particular plan; by default every plan qualifies.
-        require_feature(self.db, business.id, "marketplace_eligible")
-        missing = [c["key"] for c in self.readiness(business) if not c["done"]]
-        if missing:
-            raise AppError(409, "NOT_READY", "Complete your business setup before applying", {"missing": missing})
-        account.status = "PENDING_REVIEW"
-        account.contact_name = payload.contact_name
-        account.registration_number = payload.registration_number or None
-        account.tin = payload.tin or None
-        account.pickup_radius_km = Decimal(str(payload.pickup_radius_km))
-        account.submitted_at = now_utc()
-        account.rejection_reason = None
-        audit(self.db, actor.id, "MARKETPLACE_APPLIED", "marketplace_account", account.id or business.id)
-        self.db.commit()
-        return account
-
     def add_staff(self, business: Business, payload: StaffCreate, actor: User) -> User:
         if self.db.scalar(select(User).where(User.email == payload.email.lower())):
             raise AppError(409, "EMAIL_TAKEN", "An account with this email already exists")
@@ -146,14 +108,3 @@ class BusinessProfileService:
         audit(self.db, actor.id, "STAFF_ADDED", "user", staff.id, role=payload.role)
         self.db.commit()
         return staff
-
-
-def marketplace_status_out(db: Session, business: Business) -> dict:
-    account = db.scalar(select(MarketplaceAccount).where(MarketplaceAccount.business_id == business.id))
-    return {"business_name": business.name, "slug": business.slug, "status": account.status if account else "NOT_ENROLLED",
-            "commission_rate": float(CommissionService(db).rule_for(business.id).rate),
-            "commission_terms": commission_terms(CommissionService(db).rule_for(business.id)),
-            "pickup_radius_km": float(account.pickup_radius_km) if account else None,
-            "submitted_at": account.submitted_at if account else None, "approved_at": account.approved_at if account else None,
-            "rejection_reason": account.rejection_reason if account else None,
-            "checklist": BusinessProfileService(db).readiness(business)}

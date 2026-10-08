@@ -23,6 +23,7 @@ from ..models import (
     Business,
     BusinessHours,
     Commission,
+    CommissionRule,
     Customer,
     DayClose,
     MarketplaceAccount,
@@ -165,6 +166,14 @@ class BusinessAnalytics:
         orders, gmv, customers = self.db.execute(select(
             func.count(), func.coalesce(func.sum(Order.total), 0), func.count(distinct(Order.customer_id))).where(mp)).one()
         accrued = self._scalar(select(func.sum(Commission.amount)).join(Order, Order.id == Commission.order_id).where(mp))
+        # Trial commission (rules tied to a Marketplace trial agreement) vs standard, and what the trial waived.
+        trial_commission, waived = self.db.execute(select(
+            func.coalesce(func.sum(case((CommissionRule.agreement_id.is_not(None), Commission.amount), else_=0)), 0),
+            func.coalesce(func.sum(Commission.waived_amount), 0))
+            .join(Order, Order.id == Commission.order_id).outerjoin(CommissionRule, CommissionRule.id == Commission.rule_id)
+            .where(mp)).one()
+        trial_orders = self._scalar(select(func.count()).select_from(Order).join(
+            CommissionRule, CommissionRule.id == Order.commission_rule_id).where(mp, CommissionRule.agreement_id.is_not(None)))
         account = self.db.scalar(select(MarketplaceAccount).where(MarketplaceAccount.business_id == self.bid))
         current = CommissionService(self.db).rule_for(self.bid, self.now)
         rate = current.rate
@@ -174,6 +183,8 @@ class BusinessAnalytics:
         return {"status": account.status if account else "NOT_ENROLLED", "commission_rate": float(rate),
                 "orders": orders, "sales": int(gmv), "customers": customers, "average_order": avg_int(int(gmv), orders),
                 "commission_accrued": accrued, "commission_pending": pending, "net": int(gmv) - accrued - pending,
+                "commission_trial": int(trial_commission), "commission_standard": accrued - int(trial_commission),
+                "commission_waived": int(waived), "trial_orders": trial_orders,
                 "share_orders": pct(orders, all_orders), "share_sales": pct(int(gmv), all_sales),
                 "rating": float(self.business.rating), "review_count": self.business.review_count,
                 "commission_terms": commission_terms(current)}

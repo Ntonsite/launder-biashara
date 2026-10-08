@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, time, timedelta
 from decimal import Decimal
 
-from sqlalchemy import and_, exists, func, literal, or_, select
+from sqlalchemy import exists, func, literal, or_, select
 from sqlalchemy.orm import Session
 
 from ..core.errors import AppError, not_found
@@ -24,8 +24,11 @@ PICKUP_LEAD_MINUTES = 60
 MAX_RADIUS_KM = 50
 
 
-def marketplace_visible():
-    return and_(MarketplaceAccount.status == "ACTIVE", Business.status == "ACTIVE")
+def marketplace_visible(db: Session):
+    """Approved, listed, commercially active laundries, while the Marketplace is open to them (see marketplace_program)."""
+    from .marketplace_program import policy, visible_clause
+
+    return visible_clause(policy(db)["mode"])
 
 
 def _geography(lat_col, lng_col):
@@ -98,7 +101,7 @@ class MarketplaceService:
         stmt = (select(Business, MarketplaceAccount.pickup_radius_km, distance.label("distance_km"), open_col.label("open_now"),
                        item_price.label("item_price"), kg_price.label("kg_price"))
                 .join(MarketplaceAccount, MarketplaceAccount.business_id == Business.id)
-                .where(marketplace_visible()))
+                .where(marketplace_visible(self.db)))
         if has_point:
             stmt = stmt.where(self.geo.within_km(p.lat, p.lng, min(p.radius_km, MAX_RADIUS_KM)))
         if p.q:
@@ -148,7 +151,7 @@ class MarketplaceService:
     # ---- storefront ------------------------------------------------------------------------------------------
     def visible_business(self, slug: str) -> tuple[Business, MarketplaceAccount]:
         row = self.db.execute(select(Business, MarketplaceAccount).join(MarketplaceAccount)
-                              .where(Business.slug == slug, marketplace_visible())).first()
+                              .where(Business.slug == slug, marketplace_visible(self.db))).first()
         if not row:
             raise not_found("Laundry")
         return row[0], row[1]
