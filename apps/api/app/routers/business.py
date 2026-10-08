@@ -369,7 +369,7 @@ def payments(period: str = Query("today", max_length=20), start: date | None = N
         raise AppError(422, "INVALID_PERIOD", str(exc)) from exc
     where = [Order.business_id == ctx.business.id, Payment.paid_at >= p.start, Payment.paid_at < p.until]
     total = db.scalar(select(func.count()).select_from(Payment).join(Order, Order.id == Payment.order_id).where(*where)) or 0
-    rows = db.execute(select(Payment, Order.order_number, Customer.name)
+    rows = db.execute(select(Payment, Order.order_number, func.coalesce(Order.guest_name, Customer.name))
                       .join(Order, Order.id == Payment.order_id).join(Customer, Customer.id == Order.customer_id)
                       .where(*where).order_by(Payment.paid_at.desc()).offset(page.offset).limit(page.page_size)).all()
     result = {"items": [{**payment_out(pay), "paid_at": pay.paid_at, "refunded_at": pay.refunded_at, "order_id": pay.order_id,

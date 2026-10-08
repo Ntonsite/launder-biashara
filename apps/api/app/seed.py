@@ -104,7 +104,8 @@ def _history(db, business: Business, services: list[Service], customers: list[Cu
         customer = customers[i % len(customers)]
         source = "MARKETPLACE" if marketplace and i % 2 == 0 else ["WALK_IN", "PHONE", "WHATSAPP"][i % 3]
         status = statuses[i % len(statuses)]
-        created = now_utc() - timedelta(days=rng.randint(0 if status not in (S.COMPLETED, S.CANCELLED) else 3, 42),
+        # Work still in the shop is recent; finished work is spread over six weeks.
+        created = now_utc() - timedelta(days=rng.randint(0, 2) if status not in (S.COMPLETED, S.CANCELLED) else rng.randint(3, 42),
                                         hours=rng.randint(0, 10))
         order = Order(order_number=new_order_number(), business_id=business.id, customer_id=customer.id, source=source,
                       status=status, fulfillment="DROP_OFF", payment_method="CASH", created_at=created, updated_at=created)
