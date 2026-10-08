@@ -1,5 +1,6 @@
 """What a laundry owner sees about their plan, bills and Marketplace terms. Plain language; no internal codes."""
 import json
+import math
 from datetime import datetime
 
 from sqlalchemy import select
@@ -23,7 +24,8 @@ from .pricing import get_setting, price_in_force
 
 
 def _days_left(until: datetime | None, now: datetime) -> int | None:
-    return None if until is None else max(0, int((as_utc(until) - now).total_seconds() // 86400))
+    """Whole days left, counted the way people do: a 14-day trial started now has 14 days left."""
+    return None if until is None else max(0, math.ceil((as_utc(until) - now).total_seconds() / 86400))
 
 
 def plan_card(db: Session, plan: SubscriptionPlan, business_id: str | None = None) -> dict:
