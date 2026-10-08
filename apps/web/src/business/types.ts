@@ -47,6 +47,10 @@ export type MarketplaceStats = {
   average_order: number;
   commission_accrued: number;
   commission_pending: number;
+  commission_trial: number;
+  commission_standard: number;
+  commission_waived: number;
+  trial_orders: number;
   net: number;
   share_orders: number | null;
   share_sales: number | null;

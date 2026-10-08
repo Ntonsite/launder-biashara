@@ -456,21 +456,39 @@
       "PENDING_REVIEW": "Inakaguliwa",
       "ACTIVE": "Iko hewani",
       "REJECTED": "Haikuidhinishwa",
-      "SUSPENDED": "Imesimamishwa"
+      "SUSPENDED": "Imesimamishwa",
+      "INVITED": "Umealikwa",
+      "DRAFT": "Rasimu",
+      "CHANGES_REQUESTED": "Marekebisho yanahitajika",
+      "APPROVED": "Imeidhinishwa",
+      "TRIAL_ACTIVE": "Kipindi cha majaribio",
+      "TRIAL_EXPIRED": "Majaribio yameisha"
     },
     "headline": {
       "NOT_ENROLLED": "Wafikie wateja walio karibu",
       "PENDING_REVIEW": "Ombi lako linakaguliwa",
       "ACTIVE": "Duka lako liko hewani",
       "REJECTED": "Ombi lako halikuidhinishwa",
-      "SUSPENDED": "Duka lako limesimamishwa"
+      "SUSPENDED": "Duka lako limesimamishwa",
+      "INVITED": "Launder imekualika kujiunga na Soko",
+      "DRAFT": "Kamilisha ombi lako la Soko",
+      "CHANGES_REQUESTED": "Launder imeomba marekebisho machache",
+      "APPROVED": "Umeidhinishwa kujiunga na Soko",
+      "TRIAL_ACTIVE": "Kipindi chako cha majaribio kinaendelea",
+      "TRIAL_EXPIRED": "Kipindi chako cha majaribio kimeisha"
     },
     "body": {
       "NOT_ENROLLED": "Soko ni la hiari na ni tofauti na Launder Business. Omba ukiwa tayari; tunakagua kila laundry kabla haijaonekana.",
       "PENDING_REVIEW": "Launder inakagua taarifa zako, bei na eneo la kuchukua. Eneo lako la kazi linaendelea kama kawaida.",
       "ACTIVE": "Wateja wanaweza kukupata, kuona bei zako na kuweka oda. Oda za soko zinaonekana kwenye Oda.",
       "REJECTED": "Ona sababu hapa chini, fanya marekebisho kisha uombe tena.",
-      "SUSPENDED": "Wateja hawawezi kuona duka lako kwa sasa. Wasiliana na Launder."
+      "SUSPENDED": "Wateja hawawezi kuona duka lako kwa sasa. Wasiliana na Launder.",
+      "INVITED": "Soma masharti hapa chini kisha thibitisha kujiunga. Eneo lako la kazi linaendelea kama kawaida.",
+      "DRAFT": "Majibu yako yamehifadhiwa. Wasilisha ukimaliza maandalizi.",
+      "CHANGES_REQUESTED": "Ona kile Launder imeomba hapa chini, sahihisha taarifa zako kisha wasilisha tena.",
+      "APPROVED": "Wateja wataona duka lako mara tu kila kitu hapa chini kitakapokuwa tayari.",
+      "TRIAL_ACTIVE": "Wateja wanaweza kukupata na kuagiza mtandaoni. Oda za Soko zinaonekana kwenye Oda pamoja na nyingine.",
+      "TRIAL_EXPIRED": "Oda mpya za Soko zimesimamishwa hadi ukubali masharti ya kawaida. Mengine yote yanaendelea."
     },
     "viewStorefront": "Ona duka lako la umma",
     "submittedOn": "Liliwasilishwa {{date}}",
@@ -524,7 +542,7 @@
     "title": "Usimamizi wa jukwaa",
     "tabs": {
       "dashboard": "Muhtasari",
-      "applications": "Maombi ya soko",
+      "applications": "Soko",
       "businesses": "Biashara",
       "orders": "Oda",
       "customers": "Wateja",
@@ -710,7 +728,12 @@
       "pendingHint": "Makadirio kwa oda za Soko ambazo bado hazijakamilika",
       "net": "Mapato yako halisi kutoka Soko",
       "how": "Kamisheni ni {{rate}}% ya huduma za dobi kwenye oda za Soko. Ada za kuchukua nguo na oda za dukani, simu na WhatsApp hazitozwi kamwe.",
-      "notEnrolled": "Huko kwenye Soko la Launder."
+      "notEnrolled": "Huko kwenye Soko la Launder.",
+      "trialOrders": "Oda zilizowekwa wakati wa majaribio",
+      "trialHint": "Zimetozwa kwa kiwango cha majaribio",
+      "trialCommission": "Kamisheni kwa kiwango cha majaribio",
+      "standardCommission": "Kamisheni kwa kiwango cha kawaida",
+      "waived": "Kamisheni uliyookoa kwa majaribio"
     },
     "cust": {
       "unique": "Wateja waliohudumiwa",
@@ -1126,7 +1149,8 @@
       "terms": "Masharti ya biashara",
       "pilots": "Majaribio",
       "invoices": "Ankara na malipo",
-      "audit": "Historia ya mabadiliko"
+      "audit": "Historia ya mabadiliko",
+      "mpsettings": "Mipangilio ya soko"
     },
     "viewOnly": "Kuangalia tu. Wasimamizi wa fedha ndio hubadilisha bei na malipo.",
     "reason": "Sababu (huhifadhiwa kwenye historia)",
@@ -1325,6 +1349,396 @@
       "SUBSCRIPTION_CANCELLED": "Mpango umesitishwa",
       "SUBSCRIPTION_PAYMENT_RECORDED": "Malipo yamerekodiwa",
       "INVOICE_VOIDED": "Ankara imefutwa"
+    }
+  },
+  "mpx": {
+    "joined": "Karibu Launder Marketplace.",
+    "submitted": "Ombi limetumwa. Launder italikagua hivi karibuni.",
+    "termsAccepted": "Asante. Masharti yako ya Soko yamesasishwa.",
+    "draftSaved": "Rasimu imehifadhiwa.",
+    "invitedTitle": "Umealikwa",
+    "invitedBody": "Masharti haya yameandaliwa kwa ajili ya laundry yako. Kujiunga ni hiari.",
+    "reviewNext": "Tunakagua taarifa zako, bei na saa za kazi, kwa kawaida ndani ya siku mbili za kazi.",
+    "pitchTitle": "Kuza biashara yako ya laundry kupitia Launder Marketplace",
+    "pitchBody": "Patikana kwa watu walio karibu nawe wanaotafuta laundry, na upokee oda zao mtandaoni, pamoja na wateja wako wa dukani.",
+    "join": "Jiunge na Soko",
+    "ownerOnly": "Mwombe mmiliki wa laundry hii ajiunge.",
+    "byInvitation": "Soko linafunguliwa kwa mwaliko. Launder itawasiliana nawe.",
+    "optional": "Kujiunga ni hiari. Launder Business inaendelea vilevile ukijiunga au usipojiunga.",
+    "benefit": {
+      "reach": {
+        "title": "Wafikie wateja wapya",
+        "body": "Onekana watu walio karibu wanapotafuta laundry na dry cleaning."
+      },
+      "orders": {
+        "title": "Pokea oda mtandaoni",
+        "body": "Wateja wanachagua huduma zako na kuleta nguo au kuomba zichukuliwe."
+      },
+      "oneSystem": {
+        "title": "Mfumo mmoja",
+        "body": "Oda za dukani na za Soko kwenye orodha moja ya oda na ripoti."
+      },
+      "track": {
+        "title": "Ona kinacholetwa",
+        "body": "Oda za Soko, mauzo na wateja wapya, vinafuatiliwa peke yake."
+      },
+      "commission": {
+        "title": "Kamisheni iliyo wazi",
+        "body": "{{rate}} ya huduma za laundry kwenye oda za Soko zilizokamilika. Oda za dukani hazitozwi kamwe."
+      }
+    },
+    "offer": {
+      "kicker": "Ofa ya uzinduzi",
+      "free": "Siku {{days}} bila kamisheni",
+      "reduced": "Siku {{days}} kwa kamisheni ya {{rate}}",
+      "after": "Kisha {{rate}} kwenye oda za Soko zilizokamilika, ukikubali kuendelea tu.",
+      "startsWhenOpen": "Siku za majaribio zinaanza wateja wanapoweza kuagiza kwako kweli.",
+      "startsOnApproval": "Siku za majaribio zinaanza unapoidhinishwa.",
+      "fine": "Wateja wanalipa bei zako za kawaida. Bila kamisheni maana yake hakuna kamisheni ya Launder; si kufua bure."
+    },
+    "standard": {
+      "kicker": "Masharti ya Soko",
+      "rate": "Kamisheni ya {{rate}}",
+      "body": "Kwenye huduma za laundry katika oda za Soko zilizokamilika. Hakuna ada ya mwezi kuorodheshwa."
+    },
+    "listingFee": "Ada ya kuorodheshwa: {{amount}} kwa mwezi",
+    "readiness": "Utayari wa Soko",
+    "readyCount": "{{done}} kati ya {{total}} tayari",
+    "check": {
+      "profile": "Jina la biashara, simu na maelezo",
+      "location": "Eneo, anwani na mahali kwenye ramani",
+      "services": "Angalau huduma moja inayotumika",
+      "prices": "Kila huduma inayotumika ina bei",
+      "hours": "Saa za kazi",
+      "pickup": "Umbali wa kuchukua umewekwa (unatoa huduma ya kuchukua)",
+      "verification": "Namba ya usajili au TIN",
+      "terms": "Masharti ya Soko yamekubaliwa",
+      "verificationHint": "Iweke kwenye fomu"
+    },
+    "confirmTitle": "Thibitisha na ujiunge",
+    "termsTitle": "Unachokubali",
+    "terms": {
+      "standard": "Kamisheni ya kawaida: {{rate}} ya huduma za laundry kwenye oda za Soko zilizokamilika.",
+      "basis": "Kamisheni inahesabiwa kwenye huduma baada ya punguzo; ada ya kuchukua haihusiki.",
+      "walkIn": "Oda za dukani, simu na WhatsApp hazitozwi kamisheni kamwe.",
+      "prices": "Wateja wanalipa bei unazoweka; unaweza kuzibadilisha wakati wowote.",
+      "afterTrial": "Majaribio yakiisha, oda mpya za Soko zinasimama hadi uamue kuendelea. Oda zilizokwisha wekwa zinaendelea."
+    },
+    "acceptTerms": "Nakubali masharti ya Soko.",
+    "acceptPostTrial": "Endelea moja kwa moja kwa {{rate}} baada ya majaribio (au uamue baadaye).",
+    "confirmJoin": "Thibitisha na ujiunge",
+    "saveDraft": "Hifadhi, nitamaliza baadaye",
+    "waiting": {
+      "setup": "Kamilisha haya ili uonekane",
+      "launch": "Umeidhinishwa. Tutakujulisha mara wateja wanapoweza kuagiza.",
+      "activation": "Umeidhinishwa. Launder inaandaa duka lako.",
+      "trialKept": "Majaribio yako ya siku {{days}} kwa kamisheni ya {{rate}} yamehifadhiwa na yataanza wateja wanapoweza kuagiza.",
+      "body": "Hakuna unachohitaji kufanya kwa sasa."
+    },
+    "stats": {
+      "orders": "Oda za Soko",
+      "sales": "Mauzo ya Soko",
+      "saved": "Kamisheni uliyookoa",
+      "newCustomers": "Wateja wapya",
+      "charged": "Kamisheni iliyotozwa: {{amount}}"
+    },
+    "trial": {
+      "kicker": "MAJARIBIO BILA KAMISHENI",
+      "daysLeft_one": "Imebaki siku {{count}}",
+      "daysLeft_other": "Zimebaki siku {{count}}",
+      "progress": "Majaribio yaliyotumika",
+      "dates": "{{start}} – {{end}}",
+      "extended": "yameongezwa na Launder",
+      "now": "Kamisheni sasa",
+      "after": "Baada ya majaribio",
+      "length": "Muda wa majaribio",
+      "days_one": "Siku {{count}}",
+      "days_other": "Siku {{count}}",
+      "results": "Majaribio yako hadi sasa",
+      "summary": "Majaribio yako yalileta nini"
+    },
+    "next": {
+      "title": "Kinachofuata",
+      "continues": "Tarehe {{date}} utaendelea kwa kamisheni ya {{rate}}. Hakuna kingine kinachobadilika.",
+      "decide": "Majaribio yako yanaisha tarehe {{date}}. Ili kuendelea kupokea oda za Soko baada ya hapo, kubali kamisheni ya kawaida ya {{rate}}. Usipokubali, oda mpya za Soko zinasimama na mengine yote yanaendelea.",
+      "acceptNow": "Endelea baada ya majaribio kwa {{rate}}",
+      "report": "Fungua ripoti ya Soko"
+    },
+    "fees": "Gharama za mitandao ya simu kwa malipo ya wateja, kama zipo, ni tofauti na kamisheni ya Launder.",
+    "expired": {
+      "title": "Endelea kwenye Soko kwa kamisheni ya {{rate}}",
+      "paused": "Oda mpya za Soko zimesimamishwa na duka lako limefichwa.",
+      "existing": "Oda zilizokwisha wekwa zinaendelea kama kawaida.",
+      "business": "Oda za dukani, malipo na ripoti haviathiriki.",
+      "accept": "Kubali {{rate}} na ufungue duka langu tena"
+    },
+    "live": {
+      "terms": "Masharti yako ya Soko",
+      "commission": "Kamisheni",
+      "radius": "Umbali wa kuchukua",
+      "since": "Tangu"
+    },
+    "banner": {
+      "ending_one": "Majaribio yako ya Soko yanaisha baada ya siku {{count}}. Amua kama utaendelea.",
+      "ending_other": "Majaribio yako ya Soko yanaisha baada ya siku {{count}}. Amua kama utaendelea.",
+      "expired": "Majaribio yako ya Soko yameisha. Oda mpya za Soko zimesimamishwa hadi ukubali masharti ya kawaida.",
+      "action": "Fungua Soko"
+    }
+  },
+  "mpa": {
+    "views": {
+      "overview": "Muhtasari",
+      "providers": "Laundry",
+      "trials": "Majaribio"
+    },
+    "terms": {
+      "standard": "Masharti ya kawaida",
+      "trialWaiting": "Majaribio ya siku {{days}} kwa {{rate}} (hayajaanza)",
+      "trial": "Majaribio kwa {{rate}}",
+      "daysLeft_one": "Imebaki siku {{count}} · yanaisha {{date}}",
+      "daysLeft_other": "Zimebaki siku {{count}} · yanaisha {{date}}",
+      "daysShort_one": "Siku {{count}}",
+      "daysShort_other": "Siku {{count}}"
+    },
+    "mode": {
+      "OFF": {
+        "title": "Soko limefungwa",
+        "body": "Wateja hawawezi kuona laundry wala kuagiza mtandaoni. Usajili, ukaguzi na majaribio vinaendelea; majaribio yanasubiri kuanza."
+      },
+      "PILOT": {
+        "title": "Majaribio maalum ya uzinduzi",
+        "body": "Laundry zilizo kwenye kundi la uzinduzi pekee ndizo zinaonekana na kupokea oda."
+      },
+      "PUBLIC": {
+        "title": "Soko liko wazi",
+        "body": "Kila laundry iliyoidhinishwa na iliyo tayari inaonekana na inapokea oda."
+      },
+      "where": "Badilisha hili kwenye Mapato na bei → Mipangilio ya soko."
+    },
+    "funnel": "Usajili na majaribio",
+    "kpi": {
+      "applications": "Maombi ya kukagua",
+      "invited": "Walioalikwa",
+      "approved": "Walioidhinishwa",
+      "waiting": "Majaribio yanayosubiri kuanza",
+      "activeTrials": "Majaribio yanayoendelea",
+      "activeProviders": "Laundry zinazopokea oda",
+      "expired": "Majaribio yameisha, hawakuendelea",
+      "suspended": "Zilizosimamishwa",
+      "conversion": "Majaribio → walioendelea kulipa",
+      "gmv": "Mauzo ya Soko (GMV)",
+      "commission_net": "Kamisheni halisi iliyopatikana",
+      "commission_standard": "Kamisheni ya kawaida",
+      "commission_trial": "Kamisheni ya majaribio",
+      "commission_waived": "Kamisheni iliyosamehewa kwenye majaribio"
+    },
+    "money": "Fedha za Soko, {{start}} – {{end}}",
+    "reconcile": "Kutoka daftari la kamisheni: iliyopatikana {{earned}} − iliyorejeshwa {{reversed}} = {{net}} · oda {{orders}} za Soko zimewekwa.",
+    "pipeline": "Majaribio yanayoisha ndani ya siku 30",
+    "noExpiring": "Hakuna majaribio yanayoisha ndani ya siku 30.",
+    "accepted": "Ataendelea",
+    "notAccepted": "Hajaamua",
+    "filter": "Hali",
+    "allEnrolled": "Wote waliosajiliwa",
+    "readyShort": "{{done}}/{{total}} tayari",
+    "cohort": "kundi la uzinduzi",
+    "submitted": "Aliomba {{date}}",
+    "invitedOn": "Alialikwa {{date}}",
+    "state": {
+      "review": "Ukaguzi",
+      "commercial": "Masharti",
+      "listing": "Kuorodheshwa",
+      "orders": "Inapokea oda"
+    },
+    "review": {
+      "NOT_ENROLLED": "Hajasajiliwa",
+      "INVITED": "Amealikwa",
+      "DRAFT": "Rasimu",
+      "PENDING_REVIEW": "Inasubiri ukaguzi",
+      "CHANGES_REQUESTED": "Marekebisho yameombwa",
+      "APPROVED": "Imeidhinishwa",
+      "REJECTED": "Imekataliwa"
+    },
+    "commercial": {
+      "NONE": "Hakuna",
+      "PENDING": "Majaribio yanasubiri",
+      "TRIAL": "Majaribio",
+      "STANDARD": "Kawaida",
+      "EXPIRED": "Majaribio yameisha"
+    },
+    "listing": {
+      "HIDDEN": "Haijaorodheshwa",
+      "LISTED": "Imeorodheshwa",
+      "SUSPENDED": "Imesimamishwa",
+      "PAUSED_PLAN": "Imesimamishwa na kifurushi"
+    },
+    "yes": "Ndiyo",
+    "no": "Hapana",
+    "action": {
+      "invite": "Alika",
+      "approve": "Idhinisha",
+      "request-changes": "Omba marekebisho",
+      "reject": "Kataa",
+      "activate": "Orodhesha sasa",
+      "suspend": "Simamisha",
+      "reactivate": "Rejesha",
+      "grant": "Toa majaribio",
+      "extend": "Ongeza majaribio",
+      "end": "Maliza majaribio mapema"
+    },
+    "help": {
+      "invite": "Laundry inaona mwaliko wenye masharti haya na kuthibitisha kujiunga. Acha sehemu za majaribio wazi kutumia sera ya kawaida.",
+      "approve": "Kuidhinisha kunatoa majaribio ya kawaida usipoweka masharti maalum. Kuorodheshwa kunafuata utayari na hali ya uzinduzi.",
+      "request-changes": "Laundry inaona ujumbe wako na inaweza kuwasilisha tena.",
+      "reject": "Laundry inaona sababu na inaweza kuomba tena baadaye.",
+      "activate": "Inaorodhesha laundry iliyoidhinishwa na iliyo tayari sasa (uorodheshaji wa moja kwa moja ukiwa umezimwa).",
+      "suspend": "Inaficha duka na kusimamisha oda mpya. Oda zinazoendelea zinaendelea.",
+      "reactivate": "Inaonyesha duka tena. Siku za kusimamishwa zinarudishwa kwenye majaribio kama mpangilio unasema hivyo.",
+      "grant": "Majaribio mapya kwa laundry iliyoidhinishwa ambayo haijawahi kuyapata. Acha sehemu wazi kutumia sera ya kawaida.",
+      "extend": "Inaongeza siku kwenye majaribio. Oda zilizokwisha wekwa zinabaki na masharti yake.",
+      "end": "Inamaliza majaribio sasa. Laundry inahamia masharti ya kawaida kama iliyakubali; vinginevyo oda mpya zinasimama."
+    },
+    "done": {
+      "invite": "{{name}} amealikwa.",
+      "approve": "{{name}} ameidhinishwa.",
+      "request-changes": "Marekebisho yameombwa kwa {{name}}.",
+      "reject": "{{name}} hakuidhinishwa.",
+      "activate": "{{name}} ameorodheshwa.",
+      "suspend": "{{name}} amesimamishwa.",
+      "reactivate": "{{name}} yuko hewani tena.",
+      "grant": "{{name}} amepewa majaribio.",
+      "extend": "Majaribio ya {{name}} yameongezwa.",
+      "end": "Majaribio ya {{name}} yamemalizika."
+    },
+    "cohortLabel": "Yuko kwenye kundi la uzinduzi",
+    "confirmEnd": "Maliza majaribio haya sasa? Laundry itajulishwa.",
+    "extendBy": "Ongeza kwa (siku)",
+    "trialDays": "Siku za majaribio",
+    "trialRate": "Kamisheni ya majaribio (%)",
+    "skipTrial": "Bila majaribio: masharti ya kawaida tangu mwanzo",
+    "note": "Ujumbe kwa laundry",
+    "readiness": "Utayari na ombi",
+    "commercialTerms": "Masharti ya kibiashara",
+    "currentRate": "Kamisheni kwa oda mpya",
+    "standardRate": "Kiwango cha kawaida",
+    "agreement": "Makubaliano",
+    "postTrial": "Baada ya majaribio",
+    "trialUsage": "Majaribio: oda {{orders}}, mauzo {{sales}}, kamisheni iliyookolewa {{saved}}, wateja wapya {{customers}}.",
+    "versions": "Historia ya makubaliano",
+    "trialTerms": "Majaribio: siku {{days}} kwa {{rate}}",
+    "notStarted": "hayajaanza",
+    "source": {
+      "DEFAULT_POLICY": "sera ya kawaida",
+      "CUSTOM": "masharti maalum",
+      "INVITATION": "mwaliko"
+    },
+    "extensions_one": "yameongezwa mara {{count}}",
+    "extensions_other": "yameongezwa mara {{count}}",
+    "agreementStatus": {
+      "OFFERED": "Yametolewa",
+      "PENDING_START": "Yanasubiri kuanza",
+      "ACTIVE": "Yanatumika",
+      "ENDED": "Yameisha",
+      "CANCELLED": "Yamesitishwa"
+    },
+    "endReason": {
+      "EXPIRED": "muda umeisha",
+      "ENDED_EARLY": "yamemalizwa mapema",
+      "SUPERSEDED": "yamebadilishwa",
+      "CANCELLED": "yamesitishwa"
+    },
+    "history": "Historia ya ushiriki",
+    "event": {
+      "DRAFT_SAVED": "Rasimu imehifadhiwa",
+      "SUBMITTED": "Ombi limewasilishwa",
+      "AUTO_APPROVED": "Imeidhinishwa moja kwa moja",
+      "INVITATION_ACCEPTED": "Mwaliko umekubaliwa",
+      "POST_TRIAL_TERMS_ACCEPTED": "Amekubali kuendelea baada ya majaribio",
+      "STANDARD_TERMS_ACCEPTED": "Amekubali masharti ya kawaida",
+      "INVITED": "Amealikwa",
+      "APPROVED": "Imeidhinishwa",
+      "CHANGES_REQUESTED": "Marekebisho yameombwa",
+      "REJECTED": "Imekataliwa",
+      "ACTIVATED": "Imeorodheshwa",
+      "SUSPENDED": "Imesimamishwa",
+      "REACTIVATED": "Imerejeshwa",
+      "COHORT_ADDED": "Ameongezwa kwenye kundi la uzinduzi",
+      "COHORT_REMOVED": "Ameondolewa kwenye kundi la uzinduzi",
+      "TRIAL_GRANTED": "Majaribio yametolewa",
+      "TRIAL_EXTENDED": "Majaribio yameongezwa",
+      "TRIAL_ENDED_EARLY": "Majaribio yamemalizwa mapema",
+      "TRIAL_STARTED": "Majaribio yameanza",
+      "TRIAL_EXPIRED": "Majaribio yameisha, hakuendelea",
+      "TRIAL_CONVERTED": "Majaribio yameisha, ameendelea kwa masharti ya kawaida",
+      "PAUSED_BY_PLAN": "Imesimamishwa: kifurushi hakina Soko",
+      "RESTORED_BY_PLAN": "Imerejeshwa: kifurushi kina Soko"
+    },
+    "bucket": {
+      "active": "Yanaendelea",
+      "expiring": "Yanaisha ndani ya siku 14",
+      "waiting": "Yanasubiri kuanza",
+      "converted": "Wameendelea",
+      "expired": "Yameisha, hawakuendelea"
+    },
+    "period": "Tarehe",
+    "settings": {
+      "nothing": "Hakuna kilichobadilika.",
+      "confirmMode": {
+        "OFF": "Funga Soko? Wateja hawataona laundry yoyote wala kuagiza mtandaoni.",
+        "PILOT": "Badilisha kuwa majaribio maalum? Laundry za kundi la uzinduzi pekee zitaonekana.",
+        "PUBLIC": "Fungua Soko kwa wote? Majaribio yanayosubiri yataanza sasa."
+      },
+      "saved_one": "Mpangilio {{count}} umehifadhiwa.",
+      "saved_other": "Mipangilio {{count}} imehifadhiwa.",
+      "intro": "Thamani mpya zinatumika kwa maombi, idhini na majaribio mapya. Makubaliano yaliyokwisha fanyika yanabaki na masharti yake; kila badiliko linahifadhiwa pamoja na sababu yako.",
+      "group": {
+        "launch": "Udhibiti wa uzinduzi",
+        "enrolment": "Usajili na idhini",
+        "trial": "Majaribio ya Soko",
+        "after": "Majaribio yanapoisha",
+        "suspension": "Kusimamisha"
+      },
+      "marketplace_mode": "Nani anaweza kuona Soko",
+      "marketplace_self_enrollment": "Laundry zinaweza kuomba zenyewe",
+      "marketplace_invitations": "Wasimamizi wanaweza kualika laundry",
+      "marketplace_approval_required": "Maombi yanahitaji idhini ya msimamizi",
+      "marketplace_verification_required": "Hitaji namba ya usajili au TIN",
+      "marketplace_auto_activate": "Orodhesha laundry zilizoidhinishwa moja kwa moja zikiwa tayari",
+      "marketplace_trial_enabled": "Toa majaribio kwa laundry mpya",
+      "marketplace_trial_days": "Muda wa majaribio (siku)",
+      "marketplace_trial_rate": "Kamisheni wakati wa majaribio (%)",
+      "marketplace_trial_start": "Saa ya majaribio inaanza lini",
+      "marketplace_trial_one_per_business": "Majaribio mara moja kwa kila laundry",
+      "marketplace_trial_extension_allowed": "Majaribio yanaweza kuongezwa",
+      "marketplace_trial_max_extensions": "Idadi ya juu ya nyongeza kwa kila majaribio",
+      "marketplace_acceptance_required": "Oda mpya zinasimama hadi laundry ikubali masharti ya kawaida",
+      "marketplace_reminder_days": "Kumbusha laundry siku hizi kabla ya mwisho (mf. 7, 2, 0)",
+      "marketplace_suspension_pauses_trial": "Siku za kusimamishwa zinarudishwa kwenye majaribio yanayoendelea",
+      "standard": "Baada ya majaribio, laundry zinalipa kamisheni ya kawaida: {{rate}} kwa sasa. Ibadilishe kwenye Bei za soko.",
+      "save": "Hifadhi mipangilio",
+      "runNow": "Endesha mzunguko wa majaribio sasa"
+    },
+    "choice": {
+      "OFF": {
+        "title": "Limefungwa",
+        "body": "Hakuna anayeweza kuona wala kuagiza. Endelea kusajili laundry."
+      },
+      "PILOT": {
+        "title": "Majaribio maalum",
+        "body": "Kundi la uzinduzi pekee linaonekana."
+      },
+      "PUBLIC": {
+        "title": "Liko wazi",
+        "body": "Laundry zote zilizoidhinishwa na zilizo tayari zinaonekana."
+      },
+      "WHEN_ORDERS_OPEN": {
+        "title": "Laundry inapoweza kupokea oda",
+        "body": "Hakuna siku za majaribio zinazopotea Soko likiwa limefungwa. Inapendekezwa."
+      },
+      "ON_APPROVAL": {
+        "title": "Inapoidhinishwa",
+        "body": "Ikiwa tu mmekubaliana hivyo na laundry."
+      }
     }
   }
 }

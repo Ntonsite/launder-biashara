@@ -775,6 +775,29 @@ function MarketplaceSection({ data }: { data: Report }) {
               <dd>{money(m.net)}</dd>
             </div>
           </dl>
+          {m.trial_orders > 0 && (
+            <dl className="ledger">
+              <div>
+                <dt>
+                  {t("ops.mp.trialOrders")}
+                  <small>{t("ops.mp.trialHint")}</small>
+                </dt>
+                <dd>{m.trial_orders}</dd>
+              </div>
+              <div>
+                <dt>{t("ops.mp.trialCommission")}</dt>
+                <dd>{money(m.commission_trial)}</dd>
+              </div>
+              <div>
+                <dt>{t("ops.mp.standardCommission")}</dt>
+                <dd>{money(m.commission_standard)}</dd>
+              </div>
+              <div className="strong">
+                <dt>{t("ops.mp.waived")}</dt>
+                <dd>{money(m.commission_waived)}</dd>
+              </div>
+            </dl>
+          )}
           <p className="muted small">
             {t("ops.mp.how", { rate: m.commission_rate })}
           </p>

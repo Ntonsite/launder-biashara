@@ -4,12 +4,14 @@ import { Play, Plus } from "lucide-react";
 import { api, newIdempotencyKey } from "../lib/api";
 import { date, dateTime, errorMessage, money, percent } from "../lib/format";
 import { Notice } from "../customer/ui";
+import { MarketplaceSettings } from "./MarketplaceAdmin";
 
 const BASE = "/api/v1/admin/monetization";
 const TABS = [
   "overview",
   "plans",
   "marketplace",
+  "mpsettings",
   "terms",
   "pilots",
   "invoices",
@@ -193,6 +195,9 @@ export default function Monetization({ role }: { role: string }) {
       {tab === "overview" && <Overview ctx={ctx} />}
       {tab === "plans" && <Plans ctx={ctx} />}
       {tab === "marketplace" && <MarketplacePricing ctx={ctx} />}
+      {tab === "mpsettings" && (
+        <MarketplaceSettings canEdit={ctx.canEdit} say={ctx.say} />
+      )}
       {tab === "terms" && <Terms ctx={ctx} />}
       {tab === "pilots" && <Pilots ctx={ctx} />}
       {tab === "invoices" && <Invoices ctx={ctx} />}

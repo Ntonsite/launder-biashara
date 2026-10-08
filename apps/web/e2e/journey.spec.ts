@@ -168,12 +168,16 @@ test("pending marketplace business is not public and admin can review it", async
   await page.getByLabel("Password").fill("Admin123!");
   await page.getByRole("button", { name: "Sign in" }).click();
   await page.waitForURL("**/admin");
-  await page.getByRole("button", { name: "Marketplace applications" }).click();
-  const row = page.locator(".adminRow", { hasText: "T-Laundry" });
+  await page.getByRole("button", { name: "Marketplace", exact: true }).click();
+  await page.getByRole("button", { name: "Laundries" }).click();
+  const row = page.locator(".mpaList button", { hasText: "T-Laundry" });
   await expect(row).toContainText("Under review");
-  await row.getByRole("button", { name: "Review" }).click();
+  await row.click();
   await expect(
     page.getByText("Business name, phone and description"),
+  ).toBeVisible();
+  await expect(
+    page.locator(".mpaActions").getByRole("button", { name: "Approve" }),
   ).toBeVisible();
   await snap(page, "web-admin-application");
 });

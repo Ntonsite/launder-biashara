@@ -19,6 +19,7 @@ import {
   Wallet,
 } from "lucide-react";
 import { api } from "../lib/api";
+import type { MarketplaceView } from "./Marketplace";
 import {
   dayMonth,
   errorMessage,
@@ -93,6 +94,7 @@ export default function Dashboard() {
       ) : (
         <div className="opsDash">
           <BillingBanner />
+          <MarketplaceBanner />
           {data.first_run && <FirstRun steps={data.first_run} />}
           {data.has_orders && <Today data={data} />}
           <NeedsAttention items={data.attention} hasOrders={data.has_orders} />
@@ -146,6 +148,43 @@ function BillingBanner() {
       <BillingNotice n={top} />
     </div>
   ) : null;
+}
+
+/** Owners only: the Marketplace trial is about to end, or has ended and new Marketplace orders are paused. */
+function MarketplaceBanner() {
+  const { t } = useTranslation();
+  const can = useCan();
+  const [view, setView] = useState<MarketplaceView | null>(null);
+  const allowed = can("marketplace.manage");
+  useEffect(() => {
+    if (!allowed) return;
+    api<MarketplaceView>("/api/v1/business/marketplace", { auth: "business" })
+      .then(setView)
+      .catch(() => undefined);
+  }, [allowed]);
+  if (!view) return null;
+  const a = view.agreement;
+  const ending =
+    view.status === "TRIAL_ACTIVE" &&
+    a?.days_left != null &&
+    a.days_left <= 7 &&
+    !view.post_trial_accepted_at &&
+    view.acceptance_required;
+  if (!ending && view.status !== "TRIAL_EXPIRED") return null;
+  return (
+    <div className="dashBanner">
+      <div className={`billingNotice ${ending ? "warning" : "danger"}`}>
+        <span>
+          {ending
+            ? t("mpx.banner.ending", { count: a!.days_left ?? 0 })
+            : t("mpx.banner.expired")}
+        </span>
+        <Link className="textLink" to="/app/marketplace">
+          {t("mpx.banner.action")}
+        </Link>
+      </div>
+    </div>
+  );
 }
 
 function QuickActions() {

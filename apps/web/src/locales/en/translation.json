@@ -456,21 +456,39 @@
       "PENDING_REVIEW": "Under review",
       "ACTIVE": "Live",
       "REJECTED": "Not approved",
-      "SUSPENDED": "Paused"
+      "SUSPENDED": "Paused",
+      "INVITED": "Invited",
+      "DRAFT": "Draft",
+      "CHANGES_REQUESTED": "Changes requested",
+      "APPROVED": "Approved",
+      "TRIAL_ACTIVE": "Free trial",
+      "TRIAL_EXPIRED": "Trial ended"
     },
     "headline": {
       "NOT_ENROLLED": "Get found by customers nearby",
       "PENDING_REVIEW": "Your application is being reviewed",
       "ACTIVE": "Your storefront is live",
       "REJECTED": "Your application wasn't approved",
-      "SUSPENDED": "Your storefront is paused"
+      "SUSPENDED": "Your storefront is paused",
+      "INVITED": "Launder has invited you to the Marketplace",
+      "DRAFT": "Finish your Marketplace application",
+      "CHANGES_REQUESTED": "Launder asked for a few changes",
+      "APPROVED": "You're approved for the Marketplace",
+      "TRIAL_ACTIVE": "Your Marketplace trial is running",
+      "TRIAL_EXPIRED": "Your Marketplace trial has ended"
     },
     "body": {
       "NOT_ENROLLED": "The marketplace is optional and separate from Launder Business. Apply when you're ready; we review every laundry before it goes live.",
       "PENDING_REVIEW": "Launder checks your details, prices and pickup area. Your workspace keeps working as normal.",
       "ACTIVE": "Customers can find you, see your prices and place orders. Marketplace orders appear in Orders.",
       "REJECTED": "See the reason below, make the changes and apply again.",
-      "SUSPENDED": "Customers can't see your storefront right now. Contact Launder support."
+      "SUSPENDED": "Customers can't see your storefront right now. Contact Launder support.",
+      "INVITED": "Review the terms below and confirm to join. Your workspace keeps working as normal.",
+      "DRAFT": "Your answers are saved. Submit when your setup is complete.",
+      "CHANGES_REQUESTED": "See what Launder asked for below, update your details and submit again.",
+      "APPROVED": "Customers will see your storefront as soon as everything below is ready.",
+      "TRIAL_ACTIVE": "Customers can find you and order online. Marketplace orders appear in Orders with everything else.",
+      "TRIAL_EXPIRED": "New Marketplace orders are paused until you accept the standard terms. Everything else keeps working."
     },
     "viewStorefront": "View your public storefront",
     "submittedOn": "Submitted {{date}}",
@@ -524,7 +542,7 @@
     "title": "Platform administration",
     "tabs": {
       "dashboard": "Overview",
-      "applications": "Marketplace applications",
+      "applications": "Marketplace",
       "businesses": "Businesses",
       "orders": "Orders",
       "customers": "Customers",
@@ -710,7 +728,12 @@
       "pendingHint": "Estimated on Marketplace orders not yet completed",
       "net": "Your net from Marketplace",
       "how": "Commission is {{rate}}% of the laundry services on Marketplace orders. Pickup fees and walk-in, phone and WhatsApp orders are never charged.",
-      "notEnrolled": "You are not on Launder Marketplace."
+      "notEnrolled": "You are not on Launder Marketplace.",
+      "trialOrders": "Orders placed during your trial",
+      "trialHint": "Charged at your trial rate",
+      "trialCommission": "Commission at trial rate",
+      "standardCommission": "Commission at standard rate",
+      "waived": "Commission saved by your trial"
     },
     "cust": {
       "unique": "Customers served",
@@ -1126,7 +1149,8 @@
       "terms": "Business terms",
       "pilots": "Trials & pilots",
       "invoices": "Invoices & payments",
-      "audit": "Audit history"
+      "audit": "Audit history",
+      "mpsettings": "Marketplace settings"
     },
     "viewOnly": "View only. Finance administrators make pricing and billing changes.",
     "reason": "Reason (kept in the audit history)",
@@ -1325,6 +1349,396 @@
       "SUBSCRIPTION_CANCELLED": "Plan cancelled",
       "SUBSCRIPTION_PAYMENT_RECORDED": "Payment recorded",
       "INVOICE_VOIDED": "Invoice cancelled"
+    }
+  },
+  "mpx": {
+    "joined": "Welcome to Launder Marketplace.",
+    "submitted": "Application sent. Launder will review it soon.",
+    "termsAccepted": "Thank you. Your Marketplace terms are updated.",
+    "draftSaved": "Draft saved.",
+    "invitedTitle": "You're invited",
+    "invitedBody": "These terms were prepared for your laundry. Joining is optional.",
+    "reviewNext": "We check your details, prices and opening hours, usually within two working days.",
+    "pitchTitle": "Grow your laundry business with Launder Marketplace",
+    "pitchBody": "Be found by people near you who are looking for a laundry, and take their orders online, right next to your walk-in customers.",
+    "join": "Join Marketplace",
+    "ownerOnly": "Ask the owner of this laundry to join.",
+    "byInvitation": "The Marketplace is opening by invitation. Launder will contact you.",
+    "optional": "Joining is optional. Launder Business keeps working exactly the same whether you join or not.",
+    "benefit": {
+      "reach": {
+        "title": "Reach new customers",
+        "body": "Appear when people nearby search for laundry and dry cleaning."
+      },
+      "orders": {
+        "title": "Receive online orders",
+        "body": "Customers choose your services and drop off or book a pickup."
+      },
+      "oneSystem": {
+        "title": "One system",
+        "body": "Walk-in and Marketplace orders in the same order list and reports."
+      },
+      "track": {
+        "title": "See what it brings",
+        "body": "Marketplace orders, sales and new customers, tracked separately."
+      },
+      "commission": {
+        "title": "Clear commission",
+        "body": "{{rate}} of laundry services on completed Marketplace orders. Walk-in orders are never charged."
+      }
+    },
+    "offer": {
+      "kicker": "Launch offer",
+      "free": "{{days}} days commission-free",
+      "reduced": "{{days}} days at {{rate}} commission",
+      "after": "Then {{rate}} on completed Marketplace orders, only if you agree to continue.",
+      "startsWhenOpen": "Your trial days start when customers can actually order from you.",
+      "startsOnApproval": "Your trial days start when you're approved.",
+      "fine": "Customers pay your normal prices. Commission-free means no Launder commission; it doesn't mean free laundry."
+    },
+    "standard": {
+      "kicker": "Marketplace terms",
+      "rate": "{{rate}} commission",
+      "body": "On laundry services in completed Marketplace orders. No monthly fee to be listed."
+    },
+    "listingFee": "Listing fee: {{amount}} a month",
+    "readiness": "Marketplace readiness",
+    "readyCount": "{{done}} of {{total}} ready",
+    "check": {
+      "profile": "Business name, phone and description",
+      "location": "Area, address and map location",
+      "services": "At least one active service",
+      "prices": "Every active service has a price",
+      "hours": "Opening hours",
+      "pickup": "Pickup radius set (you offer pickup)",
+      "verification": "Registration number or TIN",
+      "terms": "Marketplace terms accepted",
+      "verificationHint": "Add it in the form"
+    },
+    "confirmTitle": "Confirm and join",
+    "termsTitle": "What you're agreeing to",
+    "terms": {
+      "standard": "Standard commission: {{rate}} of laundry services on completed Marketplace orders.",
+      "basis": "Commission is on services after discounts; your pickup fee is not included.",
+      "walkIn": "Walk-in, phone and WhatsApp orders are never charged commission.",
+      "prices": "Customers pay the prices you set; you can change them any time.",
+      "afterTrial": "When the trial ends, new Marketplace orders pause until you choose to continue. Orders already placed carry on."
+    },
+    "acceptTerms": "I accept the Marketplace terms.",
+    "acceptPostTrial": "Continue automatically at {{rate}} after the trial (you can decide later instead).",
+    "confirmJoin": "Confirm and join",
+    "saveDraft": "Save and finish later",
+    "waiting": {
+      "setup": "Finish these to go live",
+      "launch": "Approved. We'll tell you the moment customers can order.",
+      "activation": "Approved. Launder is preparing your storefront.",
+      "trialKept": "Your {{days}}-day trial at {{rate}} commission is reserved and starts when customers can order.",
+      "body": "Nothing for you to do right now."
+    },
+    "stats": {
+      "orders": "Marketplace orders",
+      "sales": "Marketplace sales",
+      "saved": "Commission saved",
+      "newCustomers": "New customers",
+      "charged": "Commission charged: {{amount}}"
+    },
+    "trial": {
+      "kicker": "COMMISSION-FREE TRIAL",
+      "daysLeft_one": "{{count}} day left",
+      "daysLeft_other": "{{count}} days left",
+      "progress": "Trial used",
+      "dates": "{{start}} – {{end}}",
+      "extended": "extended by Launder",
+      "now": "Commission now",
+      "after": "After the trial",
+      "length": "Trial length",
+      "days_one": "{{count}} day",
+      "days_other": "{{count}} days",
+      "results": "Your trial so far",
+      "summary": "What your trial brought"
+    },
+    "next": {
+      "title": "What happens next",
+      "continues": "On {{date}} you continue at {{rate}} commission. Nothing else changes.",
+      "decide": "Your trial ends on {{date}}. To keep receiving Marketplace orders after that, accept the standard {{rate}} commission. If you don't, new Marketplace orders pause and everything else keeps working.",
+      "acceptNow": "Continue after the trial at {{rate}}",
+      "report": "Open the Marketplace report"
+    },
+    "fees": "Mobile money charges for customer payments, if any, are separate from Launder commission.",
+    "expired": {
+      "title": "Continue on the Marketplace at {{rate}} commission",
+      "paused": "New Marketplace orders are paused and your storefront is hidden.",
+      "existing": "Orders already placed carry on as normal.",
+      "business": "Walk-in orders, payments and reports are not affected.",
+      "accept": "Accept {{rate}} and reopen my storefront"
+    },
+    "live": {
+      "terms": "Your Marketplace terms",
+      "commission": "Commission",
+      "radius": "Pickup radius",
+      "since": "Since"
+    },
+    "banner": {
+      "ending_one": "Your Marketplace trial ends in {{count}} day. Decide whether to continue.",
+      "ending_other": "Your Marketplace trial ends in {{count}} days. Decide whether to continue.",
+      "expired": "Your Marketplace trial has ended. New Marketplace orders are paused until you accept the standard terms.",
+      "action": "Open Marketplace"
+    }
+  },
+  "mpa": {
+    "views": {
+      "overview": "Overview",
+      "providers": "Laundries",
+      "trials": "Trials"
+    },
+    "terms": {
+      "standard": "Standard terms",
+      "trialWaiting": "{{days}}-day trial at {{rate}} (not started)",
+      "trial": "Trial at {{rate}}",
+      "daysLeft_one": "{{count}} day left · ends {{date}}",
+      "daysLeft_other": "{{count}} days left · ends {{date}}",
+      "daysShort_one": "{{count}} day",
+      "daysShort_other": "{{count}} days"
+    },
+    "mode": {
+      "OFF": {
+        "title": "Marketplace closed",
+        "body": "Customers can't see laundries or order online. Onboarding, reviews and trials continue; trials wait to start."
+      },
+      "PILOT": {
+        "title": "Controlled pilot",
+        "body": "Only laundries in the launch group are visible and can take orders."
+      },
+      "PUBLIC": {
+        "title": "Marketplace open",
+        "body": "Every approved, ready laundry is visible and can take orders."
+      },
+      "where": "Change this in Monetization → Marketplace settings."
+    },
+    "funnel": "Enrolment and trials",
+    "kpi": {
+      "applications": "Applications to review",
+      "invited": "Invited",
+      "approved": "Approved",
+      "waiting": "Trials waiting to start",
+      "activeTrials": "Active trials",
+      "activeProviders": "Laundries taking orders",
+      "expired": "Trial ended, not continued",
+      "suspended": "Suspended",
+      "conversion": "Trial → paid conversion",
+      "gmv": "Marketplace GMV",
+      "commission_net": "Commission earned (net)",
+      "commission_standard": "Standard commission",
+      "commission_trial": "Trial commission",
+      "commission_waived": "Commission waived in trials"
+    },
+    "money": "Marketplace money, {{start}} – {{end}}",
+    "reconcile": "From the commission ledger: earned {{earned}} − reversed {{reversed}} = {{net}} · {{orders}} Marketplace orders placed.",
+    "pipeline": "Trials ending in the next 30 days",
+    "noExpiring": "No trials end in the next 30 days.",
+    "accepted": "Will continue",
+    "notAccepted": "Not decided",
+    "filter": "Status",
+    "allEnrolled": "All enrolled",
+    "readyShort": "{{done}}/{{total}} ready",
+    "cohort": "launch group",
+    "submitted": "Applied {{date}}",
+    "invitedOn": "Invited {{date}}",
+    "state": {
+      "review": "Review",
+      "commercial": "Terms",
+      "listing": "Listing",
+      "orders": "Taking orders"
+    },
+    "review": {
+      "NOT_ENROLLED": "Not enrolled",
+      "INVITED": "Invited",
+      "DRAFT": "Draft",
+      "PENDING_REVIEW": "Waiting for review",
+      "CHANGES_REQUESTED": "Changes requested",
+      "APPROVED": "Approved",
+      "REJECTED": "Rejected"
+    },
+    "commercial": {
+      "NONE": "None",
+      "PENDING": "Trial waiting",
+      "TRIAL": "Trial",
+      "STANDARD": "Standard",
+      "EXPIRED": "Trial ended"
+    },
+    "listing": {
+      "HIDDEN": "Not listed",
+      "LISTED": "Listed",
+      "SUSPENDED": "Suspended",
+      "PAUSED_PLAN": "Paused by plan"
+    },
+    "yes": "Yes",
+    "no": "No",
+    "action": {
+      "invite": "Invite",
+      "approve": "Approve",
+      "request-changes": "Request changes",
+      "reject": "Reject",
+      "activate": "Activate listing",
+      "suspend": "Suspend",
+      "reactivate": "Reactivate",
+      "grant": "Grant trial",
+      "extend": "Extend trial",
+      "end": "End trial early"
+    },
+    "help": {
+      "invite": "The laundry sees an invitation with these terms and confirms to join. Leave trial fields empty for the default policy.",
+      "approve": "Approval gives the default trial unless you set individual terms. Listing follows readiness and the launch mode.",
+      "request-changes": "The laundry sees your message and can resubmit.",
+      "reject": "The laundry sees the reason and can apply again later.",
+      "activate": "Lists an approved, ready laundry now (when automatic activation is off).",
+      "suspend": "Hides the storefront and stops new orders. Orders in progress continue.",
+      "reactivate": "Shows the storefront again. Suspended days are added back to a running trial if the setting says so.",
+      "grant": "A new trial for an approved laundry that hasn't had one. Leave fields empty for the default policy.",
+      "extend": "Adds days to the trial. Orders already placed keep their terms.",
+      "end": "Ends the trial now. The laundry moves to standard terms if it accepted them; otherwise new orders pause."
+    },
+    "done": {
+      "invite": "{{name}} was invited.",
+      "approve": "{{name}} is approved.",
+      "request-changes": "Changes requested from {{name}}.",
+      "reject": "{{name}} was not approved.",
+      "activate": "{{name}} is listed.",
+      "suspend": "{{name}} is suspended.",
+      "reactivate": "{{name}} is live again.",
+      "grant": "Trial granted to {{name}}.",
+      "extend": "Trial extended for {{name}}.",
+      "end": "Trial ended for {{name}}."
+    },
+    "cohortLabel": "In the launch group",
+    "confirmEnd": "End this trial now? The laundry will be told.",
+    "extendBy": "Extend by (days)",
+    "trialDays": "Trial days",
+    "trialRate": "Trial commission (%)",
+    "skipTrial": "No trial: standard terms from the start",
+    "note": "Message to the laundry",
+    "readiness": "Readiness and application",
+    "commercialTerms": "Commercial terms",
+    "currentRate": "Commission on a new order",
+    "standardRate": "Standard rate",
+    "agreement": "Agreement",
+    "postTrial": "After the trial",
+    "trialUsage": "Trial: {{orders}} orders, {{sales}} sales, {{saved}} commission saved, {{customers}} new customers.",
+    "versions": "Agreement history",
+    "trialTerms": "Trial: {{days}} days at {{rate}}",
+    "notStarted": "not started",
+    "source": {
+      "DEFAULT_POLICY": "default policy",
+      "CUSTOM": "individual terms",
+      "INVITATION": "invitation"
+    },
+    "extensions_one": "extended {{count}} time",
+    "extensions_other": "extended {{count}} times",
+    "agreementStatus": {
+      "OFFERED": "Offered",
+      "PENDING_START": "Waiting to start",
+      "ACTIVE": "In force",
+      "ENDED": "Ended",
+      "CANCELLED": "Cancelled"
+    },
+    "endReason": {
+      "EXPIRED": "expired",
+      "ENDED_EARLY": "ended early",
+      "SUPERSEDED": "replaced",
+      "CANCELLED": "cancelled"
+    },
+    "history": "Participation history",
+    "event": {
+      "DRAFT_SAVED": "Draft saved",
+      "SUBMITTED": "Application submitted",
+      "AUTO_APPROVED": "Approved automatically",
+      "INVITATION_ACCEPTED": "Invitation accepted",
+      "POST_TRIAL_TERMS_ACCEPTED": "Agreed to continue after the trial",
+      "STANDARD_TERMS_ACCEPTED": "Accepted standard terms",
+      "INVITED": "Invited",
+      "APPROVED": "Approved",
+      "CHANGES_REQUESTED": "Changes requested",
+      "REJECTED": "Rejected",
+      "ACTIVATED": "Listing activated",
+      "SUSPENDED": "Suspended",
+      "REACTIVATED": "Reactivated",
+      "COHORT_ADDED": "Added to launch group",
+      "COHORT_REMOVED": "Removed from launch group",
+      "TRIAL_GRANTED": "Trial granted",
+      "TRIAL_EXTENDED": "Trial extended",
+      "TRIAL_ENDED_EARLY": "Trial ended early",
+      "TRIAL_STARTED": "Trial started",
+      "TRIAL_EXPIRED": "Trial ended, not continued",
+      "TRIAL_CONVERTED": "Trial ended, continued on standard terms",
+      "PAUSED_BY_PLAN": "Paused: plan does not include Marketplace",
+      "RESTORED_BY_PLAN": "Restored: plan includes Marketplace"
+    },
+    "bucket": {
+      "active": "Running",
+      "expiring": "Ending in 14 days",
+      "waiting": "Waiting to start",
+      "converted": "Converted",
+      "expired": "Ended, not continued"
+    },
+    "period": "Dates",
+    "settings": {
+      "nothing": "Nothing changed.",
+      "confirmMode": {
+        "OFF": "Close the Marketplace? Customers will no longer see any laundry or be able to order online.",
+        "PILOT": "Switch to a controlled pilot? Only laundries in the launch group will be visible.",
+        "PUBLIC": "Open the Marketplace to everyone? Waiting trials start now."
+      },
+      "saved_one": "{{count}} setting saved.",
+      "saved_other": "{{count}} settings saved.",
+      "intro": "New values apply to new applications, approvals and trials. Agreements already made keep their terms; every change is recorded with your reason.",
+      "group": {
+        "launch": "Launch control",
+        "enrolment": "Enrolment and approval",
+        "trial": "Marketplace trial",
+        "after": "When a trial ends",
+        "suspension": "Suspension"
+      },
+      "marketplace_mode": "Who can see the Marketplace",
+      "marketplace_self_enrollment": "Laundries can apply by themselves",
+      "marketplace_invitations": "Admins can invite laundries",
+      "marketplace_approval_required": "Applications need admin approval",
+      "marketplace_verification_required": "Require a registration number or TIN",
+      "marketplace_auto_activate": "List approved laundries automatically when they're ready",
+      "marketplace_trial_enabled": "Offer a trial to new laundries",
+      "marketplace_trial_days": "Trial length (days)",
+      "marketplace_trial_rate": "Commission during the trial (%)",
+      "marketplace_trial_start": "When the trial clock starts",
+      "marketplace_trial_one_per_business": "One trial per laundry",
+      "marketplace_trial_extension_allowed": "Trials can be extended",
+      "marketplace_trial_max_extensions": "Maximum extensions per trial",
+      "marketplace_acceptance_required": "New orders pause until the laundry accepts the standard terms",
+      "marketplace_reminder_days": "Remind the laundry this many days before the end (e.g. 7, 2, 0)",
+      "marketplace_suspension_pauses_trial": "Suspended days are added back to a running trial",
+      "standard": "After a trial, laundries pay the standard commission: {{rate}} today. Change it under Marketplace pricing.",
+      "save": "Save settings",
+      "runNow": "Run trial lifecycle now"
+    },
+    "choice": {
+      "OFF": {
+        "title": "Closed",
+        "body": "Nobody can see or order. Keep onboarding laundries."
+      },
+      "PILOT": {
+        "title": "Controlled pilot",
+        "body": "Only the launch group is visible."
+      },
+      "PUBLIC": {
+        "title": "Open",
+        "body": "All approved, ready laundries are visible."
+      },
+      "WHEN_ORDERS_OPEN": {
+        "title": "When the laundry can receive orders",
+        "body": "No trial days are lost while the Marketplace is closed. Recommended."
+      },
+      "ON_APPROVAL": {
+        "title": "On approval",
+        "body": "Only if you have agreed this with the laundry."
+      }
     }
   }
 }
