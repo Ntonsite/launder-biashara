@@ -17,7 +17,8 @@ _FRONT_DESK = _OPERATIONS | {"orders.create", "payments.record", "customers.view
 _MANAGER = _FRONT_DESK | {"orders.edit", "services.manage", "settings.manage", "staff.view", "marketplace.view",
                           "reports.operational"}
 CAPABILITIES: dict[str, frozenset[str]] = {
-    OWNER: frozenset(_MANAGER | {"staff.manage", "marketplace.manage", "reports.business", "performance.view"}),
+    OWNER: frozenset(_MANAGER | {"staff.manage", "marketplace.manage", "reports.business", "performance.view",
+                                 "billing.manage"}),
     MANAGER: frozenset(_MANAGER),
     CASHIER: frozenset(_FRONT_DESK | {"orders.edit"}),
     STAFF: frozenset(_OPERATIONS),

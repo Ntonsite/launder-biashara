@@ -29,6 +29,10 @@ class MarketplaceAdminService:
             raise AppError(409, "INVALID_TRANSITION", f"Cannot {decision} an application that is {account.status}")
         if needs_reason and not (reason and reason.strip()):
             raise AppError(422, "REASON_REQUIRED", "A reason is required for this decision")
+        if decision in ("approve", "reinstate"):
+            from .entitlements import require_feature
+
+            require_feature(self.db, account.business_id, "marketplace_eligible")  # before anything changes
         previous = account.status
         now = datetime.now(UTC)
         account.status = target
@@ -41,7 +45,10 @@ class MarketplaceAdminService:
             if business.status == "ONBOARDING":
                 business.status = "ACTIVE"
         if commission_rate is not None:
-            account.commission_rate = Decimal(str(commission_rate))
+            from .pricing import PricingAdmin  # commission terms are versioned rules, never a field edit
+
+            PricingAdmin(self.db, actor).create_rule("BUSINESS", account.business_id, Decimal(str(commission_rate)), 0, False,
+                                                     True, None, None, f"Set on {decision}")
         audit(self.db, actor.id, f"MARKETPLACE_{decision.upper()}", "marketplace_account", account.id,
               from_status=previous, to_status=target, reason=reason)
         self.db.commit()

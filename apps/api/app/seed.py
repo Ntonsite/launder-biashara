@@ -29,6 +29,7 @@ from .models import (
     Service,
     User,
 )
+from .seed_commercial import seed_commercial
 from .seed_operations import seed_operating_history
 from .services.orders import new_order_number
 from .services.reviews import recompute_rating
@@ -153,7 +154,8 @@ def _history(db, business: Business, services: list[Service], customers: list[Cu
 def seed(db) -> bool:
     """Base demo data once; FreshWash's operating history is added separately (also to databases seeded earlier)."""
     created = _seed_base(db)
-    return seed_operating_history(db) or created
+    history = seed_operating_history(db)
+    return seed_commercial(db) or history or created
 
 
 def _seed_base(db) -> bool:
@@ -172,7 +174,7 @@ def _seed_base(db) -> bool:
         customers.append(record)
     db.flush()
 
-    for (slug, name, email, owner_name, area, address, lat, lng, phone, pickup, fee, mp_status, rate, menu, delta, week,
+    for (slug, name, email, owner_name, area, address, lat, lng, phone, pickup, fee, mp_status, _rate, menu, delta, week,
          description) in BUSINESSES:
         owner = User(email=email, password_hash=hash_password(PASSWORD), full_name=owner_name, role="BUSINESS_OWNER")
         db.add(owner)
@@ -193,8 +195,9 @@ def _seed_base(db) -> bool:
                                     turnaround_hours=hours, sort_order=order_index, description=sdesc))
         db.add_all(services)
         submitted = now_utc() - timedelta(days=60 if mp_status == "ACTIVE" else 2)
-        db.add(MarketplaceAccount(business_id=business.id, status=mp_status, commission_rate=Decimal(rate),
-                                  pickup_radius_km=Decimal("8"), contact_name=owner_name, submitted_at=submitted,
+        # Commission terms are versioned rules (migration 0004 + seed_commercial), not account fields.
+        db.add(MarketplaceAccount(business_id=business.id, status=mp_status, pickup_radius_km=Decimal("8"),
+                                  contact_name=owner_name, submitted_at=submitted,
                                   approved_at=submitted + timedelta(days=1) if mp_status == "ACTIVE" else None))
         db.add(BusinessOnboarding(business_id=business.id, current_step=9, completed=True))
         db.flush()

@@ -13,6 +13,8 @@ from ..models import Business, BusinessHours, BusinessOnboarding, MarketplaceAcc
 from ..schemas.auth import BusinessRegisterRequest
 from ..schemas.business import BusinessProfileUpdate, HoursUpdate, MarketplaceApplication, StaffCreate
 from .audit import audit
+from .commission import CommissionService, commission_terms
+from .entitlements import require_feature
 
 DEFAULT_LAT, DEFAULT_LNG = -6.7924, 39.2083  # Dar es Salaam city centre, only until the owner sets a location
 
@@ -118,6 +120,8 @@ class BusinessProfileService:
             self.db.add(account)
         if account.status not in ("NOT_ENROLLED", "REJECTED"):
             raise AppError(409, "APPLICATION_EXISTS", f"Marketplace application is already {account.status}")
+        # Admins decide (per plan) whether Marketplace needs a particular plan; by default every plan qualifies.
+        require_feature(self.db, business.id, "marketplace_eligible")
         missing = [c["key"] for c in self.readiness(business) if not c["done"]]
         if missing:
             raise AppError(409, "NOT_READY", "Complete your business setup before applying", {"missing": missing})
@@ -147,7 +151,8 @@ class BusinessProfileService:
 def marketplace_status_out(db: Session, business: Business) -> dict:
     account = db.scalar(select(MarketplaceAccount).where(MarketplaceAccount.business_id == business.id))
     return {"business_name": business.name, "slug": business.slug, "status": account.status if account else "NOT_ENROLLED",
-            "commission_rate": float(account.commission_rate) if account else None,
+            "commission_rate": float(CommissionService(db).rule_for(business.id).rate),
+            "commission_terms": commission_terms(CommissionService(db).rule_for(business.id)),
             "pickup_radius_km": float(account.pickup_radius_km) if account else None,
             "submitted_at": account.submitted_at if account else None, "approved_at": account.approved_at if account else None,
             "rejection_reason": account.rejection_reason if account else None,

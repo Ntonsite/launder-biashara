@@ -13,7 +13,9 @@ from .models import Business, User
 
 bearer = HTTPBearer(auto_error=False)
 
-ADMIN_ROLES = ("ADMIN", "SUPER_ADMIN")
+ADMIN_ROLES = ("ADMIN", "SUPER_ADMIN", "FINANCE_ADMIN")
+# Prices, commission, business terms, pilots and subscription payments. ADMIN (operations) can view but not change.
+PRICING_ROLES = ("SUPER_ADMIN", "FINANCE_ADMIN")
 BUSINESS_ROLES = P.BUSINESS_ROLES
 
 
@@ -42,6 +44,16 @@ def optional_user(credentials: HTTPAuthorizationCredentials | None = Depends(bea
 def require_admin(user: User = Depends(current_user)) -> User:
     if user.role not in ADMIN_ROLES:
         raise AppError(403, "FORBIDDEN", "Admin permission required")
+    return user
+
+
+def require_pricing_role(user: User) -> None:
+    if user.role not in PRICING_ROLES:
+        raise AppError(403, "FORBIDDEN", "Only finance administrators can change pricing and billing")
+
+
+def require_pricing_admin(user: User = Depends(require_admin)) -> User:
+    require_pricing_role(user)
     return user
 
 

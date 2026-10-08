@@ -34,6 +34,8 @@ from ..schemas.orders import StatusChange
 from ..services.analytics import DUE_SOON_HOURS, LIVE, PRE_READY, BusinessAnalytics, avg_int
 from ..services.audit import audit
 from ..services.business import BusinessProfileService, BusinessRegistrationService, marketplace_status_out
+from ..services.entitlements import require_feature
+from ..services.entitlements import resolve as resolve_plan
 from ..services.marketplace import hours_out, service_out
 from ..services.orders import OrderService, ensure_business_customer, order_detail
 from ..services.payments import PaymentService, payment_out
@@ -53,9 +55,12 @@ def profile_out(b: Business) -> dict:
 
 # ---- profile, hours, onboarding ---------------------------------------------------------------------------------
 @router.get("/profile")
-def profile(ctx: BusinessContext = Depends(business_context)):
+def profile(ctx: BusinessContext = Depends(business_context), db: Session = Depends(get_db)):
     """Includes the caller's role and capabilities so clients can shape navigation (the API still enforces them)."""
-    return {**profile_out(ctx.business), "role": ctx.user.role, "capabilities": sorted(ctx.capabilities)}
+    effective = resolve_plan(db, ctx.business.id)
+    return {**profile_out(ctx.business), "role": ctx.user.role, "capabilities": sorted(ctx.capabilities),
+            "plan": {"name": effective.plan.name, "features": sorted(effective.features), "source": effective.source,
+                     "access_until": effective.ends_at}}
 
 
 @router.put("/profile")
@@ -148,6 +153,8 @@ def customers(q: str | None = Query(None, max_length=80), segment: str | None = 
               sort: str = Query("recent", max_length=10), page: Page = Depends(page_params),
               ctx: BusinessContext = Depends(business_context), db: Session = Depends(get_db)):
     ctx.require("customers.view")
+    if segment or sort not in ("recent", "name"):
+        require_feature(db, ctx.business.id, "customer_crm")  # segments and spend ranking are CRM
     stmt = BusinessRepository(db).customers_stmt(ctx.business.id, q, segment, sort)
     total = db.scalar(select(func.count()).select_from(stmt.order_by(None).subquery())) or 0
     rows = db.execute(stmt.offset(page.offset).limit(page.page_size)).all()
@@ -197,6 +204,7 @@ def _customer_detail(db: Session, ctx: BusinessContext, customer_id: str) -> dic
 @router.get("/customers/{customer_id}")
 def customer_detail(customer_id: str, ctx: BusinessContext = Depends(business_context), db: Session = Depends(get_db)):
     ctx.require("customers.view")
+    require_feature(db, ctx.business.id, "customer_crm")
     return _customer_detail(db, ctx, customer_id)
 
 
@@ -204,6 +212,7 @@ def customer_detail(customer_id: str, ctx: BusinessContext = Depends(business_co
 def customer_notes(customer_id: str, payload: CustomerNotes, ctx: BusinessContext = Depends(business_context),
                    db: Session = Depends(get_db)):
     ctx.require("customers.view")
+    require_feature(db, ctx.business.id, "customer_crm")
     link = db.scalar(select(BusinessCustomer).where(BusinessCustomer.business_id == ctx.business.id,
                                                    BusinessCustomer.customer_id == customer_id))
     if not link:
@@ -267,6 +276,7 @@ def export_orders(f: OrderFilters = Depends(order_filters), ctx: BusinessContext
                   db: Session = Depends(get_db)):
     """Every order matching the filters (up to 10,000), not just the page on screen."""
     ctx.require("reports.operational")
+    require_feature(db, ctx.business.id, "data_export")
     stmt = BusinessRepository(db).orders_stmt(ctx.business.id, f, ctx.user.role).options(
         selectinload(Order.customer), selectinload(Order.items)).limit(EXPORT_LIMIT + 1)
     rows = list(db.scalars(stmt))
@@ -281,6 +291,7 @@ def export_orders(f: OrderFilters = Depends(order_filters), ctx: BusinessContext
 @router.post("/orders", status_code=201)
 def create_order(payload: BusinessOrderCreate, ctx: BusinessContext = Depends(business_context), db: Session = Depends(get_db)):
     ctx.require("orders.create")
+    require_feature(db, ctx.business.id, "walk_in_orders")
     order = OrderService(db).create_business_order(ctx.business, ctx.user, payload)
     return {"id": order.id, "order_number": order.order_number, "status": order.status, "total": order.total,
             "due_at": order.due_at}
@@ -419,6 +430,14 @@ def staff(ctx: BusinessContext = Depends(business_context), db: Session = Depend
 @router.post("/staff", status_code=201)
 def add_staff(payload: StaffCreate, ctx: BusinessContext = Depends(business_context), db: Session = Depends(get_db)):
     ctx.require_owner()
+    effective = resolve_plan(db, ctx.business.id)
+    if payload.role != "STAFF" and "team_roles" not in effective.features:
+        require_feature(db, ctx.business.id, "team_roles")
+    team = db.scalar(select(func.count()).select_from(User).where(User.business_id == ctx.business.id,
+                                                                    User.active.is_(True))) or 0
+    if effective.plan.max_staff is not None and team >= effective.plan.max_staff:
+        raise AppError(402, "PLAN_LIMIT_REACHED", f"Your plan includes up to {effective.plan.max_staff} team members",
+                       {"limit": effective.plan.max_staff, "current_plan": effective.plan.name})
     return _staff_out(BusinessProfileService(db).add_staff(ctx.business, payload, ctx.user))
 
 

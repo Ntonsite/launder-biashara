@@ -11,11 +11,14 @@ from ..core.errors import AppError
 from ..database import get_db
 from ..dependencies import BusinessContext, business_context
 from ..domain import permissions as P
+from ..domain.features import ADVANCED_REPORTS
 from ..domain.periods import KINDS, PeriodError, resolve
 from ..models import DayClose
 from ..schemas.business import DayCloseCreate
 from ..services.analytics import BusinessAnalytics, business_date_period
 from ..services.audit import audit
+from ..services.entitlements import require_feature
+from ..services.entitlements import resolve as resolve_plan
 from ..services.report_export import report_csv
 
 router = APIRouter(prefix="/business", tags=["Business analytics"])
@@ -28,10 +31,12 @@ def _period(kind: str, period: str | None, start: date | None, end: date | None)
         raise AppError(422, "INVALID_PERIOD", str(exc)) from exc
 
 
-def _report_kind(kind: str, ctx: BusinessContext) -> None:
+def _report_kind(kind: str, ctx: BusinessContext, db: Session) -> None:
     if kind not in P.REPORT_CAPABILITY:
         raise AppError(404, "NOT_FOUND", "Report not found")
     ctx.require(P.REPORT_CAPABILITY[kind])
+    if kind in ADVANCED_REPORTS:
+        require_feature(db, ctx.business.id, "advanced_reports")
 
 
 @router.get("/dashboard")
@@ -41,8 +46,11 @@ def dashboard(ctx: BusinessContext = Depends(business_context), db: Session = De
 
 
 @router.get("/reports")
-def reports(ctx: BusinessContext = Depends(business_context)):
-    return {"reports": [{"kind": k, "default_period": BusinessAnalytics.DEFAULT_PERIOD[k]}
+def reports(ctx: BusinessContext = Depends(business_context), db: Session = Depends(get_db)):
+    features = resolve_plan(db, ctx.business.id).features
+    return {"reports": [{"kind": k, "default_period": BusinessAnalytics.DEFAULT_PERIOD[k],
+                         "locked": k in ADVANCED_REPORTS and "advanced_reports" not in features,
+                         "export": "data_export" in features}
                         for k, cap in P.REPORT_CAPABILITY.items() if ctx.can(cap)],
             "periods": list(KINDS)}
 
@@ -50,7 +58,7 @@ def reports(ctx: BusinessContext = Depends(business_context)):
 @router.get("/reports/{kind}")
 def report(kind: str, period: str | None = Query(None, max_length=20), start: date | None = None, end: date | None = None,
            ctx: BusinessContext = Depends(business_context), db: Session = Depends(get_db)):
-    _report_kind(kind, ctx)
+    _report_kind(kind, ctx, db)
     return BusinessAnalytics(db, ctx.business).report(kind, _period(kind, period, start, end))
 
 
@@ -58,7 +66,8 @@ def report(kind: str, period: str | None = Query(None, max_length=20), start: da
 def report_export(kind: str, period: str | None = Query(None, max_length=20), start: date | None = None,
                   end: date | None = None, lang: str = Query("en", pattern="^(en|sw)$"),
                   ctx: BusinessContext = Depends(business_context), db: Session = Depends(get_db)):
-    _report_kind(kind, ctx)
+    _report_kind(kind, ctx, db)
+    require_feature(db, ctx.business.id, "data_export")
     p = _period(kind, period, start, end)
     data = BusinessAnalytics(db, ctx.business).report(kind, p)
     filename = f"launder-{kind}-{p.start_date.isoformat()}" + ("" if p.days == 1 else f"-to-{p.end_date.isoformat()}") + ".csv"

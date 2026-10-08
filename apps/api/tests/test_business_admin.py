@@ -3,14 +3,32 @@ import uuid
 from .conftest import bearer, customer_login, staff_login
 from .test_auth import new_phone
 
+_TOKENS: dict[str, dict] = {}  # access tokens last 30 minutes; a test run is shorter
 
-def register(client):
+
+def grant_plan(client, business_id: str, plan_code: str = "PRO", days: int = 30) -> None:
+    """Give a test laundry complimentary access to a plan through the real admin API (finance role)."""
+    if "finance" not in _TOKENS:
+        _TOKENS["finance"] = bearer(staff_login(client, "finance@launder.co.tz", "Admin123!")["access_token"])
+    finance = _TOKENS["finance"]
+    plan = next(p for p in client.get("/api/v1/admin/monetization/plans", headers=finance).json() if p["code"] == plan_code)
+    r = client.post("/api/v1/admin/monetization/overrides", headers=finance, json={
+        "business_id": business_id, "type": "COMPLIMENTARY_PLAN", "plan_id": plan["id"], "days": days,
+        "reason": "Test laundry"})
+    assert r.status_code == 201, r.text
+
+
+def register(client, plan: str | None = "PRO"):
+    """A new laundry. By default given Pro (most tests exercise Pro features); plan=None keeps the free default plan."""
     suffix = uuid.uuid4().hex[:8]
     r = client.post("/api/v1/auth/business/register", json={"full_name": "Mwanaisha Kweka", "business_name": f"Kawe Wash {suffix}",
                     "phone": "0715" + suffix[:6].translate(str.maketrans("abcdef", "123456")), "email": f"kawe-{suffix}@example.co.tz",
                     "password": "Secure123!"})
     assert r.status_code == 201, r.text
-    return bearer(r.json()["access_token"]), r.json()["user"]
+    headers, user = bearer(r.json()["access_token"]), r.json()["user"]
+    if plan:
+        grant_plan(client, client.get("/api/v1/business/profile", headers=headers).json()["id"], plan)
+    return headers, user
 
 
 def test_new_business_is_not_listed_until_approved(client, admin):

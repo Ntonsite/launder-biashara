@@ -7,12 +7,13 @@ from sqlalchemy.orm import Session, selectinload
 
 from ..core.errors import not_found
 from ..database import get_db
-from ..dependencies import require_admin
+from ..dependencies import require_admin, require_pricing_role
 from ..domain import order_states as S
 from ..models import AuditLog, Business, Commission, Customer, MarketplaceAccount, Order, Payment, Review, Service, User
 from ..schemas.admin import MarketplaceDecision
 from ..services.admin import MarketplaceAdminService
 from ..services.business import BusinessProfileService
+from ..services.commission import CommissionService
 from ..services.marketplace import hours_out
 from ..services.payments import PaymentService, payment_out
 from ..services.reviews import ReviewService
@@ -49,10 +50,10 @@ def businesses(q: str | None = Query(None, max_length=80), page: Page = Depends(
         "marketplace_status": x.marketplace.status if x.marketplace else "NOT_ENROLLED"})
 
 
-def _application_out(m: MarketplaceAccount) -> dict:
+def _application_out(m: MarketplaceAccount, db: Session) -> dict:
     b = m.business
     return {"id": m.id, "business_id": b.id, "business_name": b.name, "slug": b.slug, "area": b.area, "status": m.status,
-            "commission_rate": float(m.commission_rate), "pickup_radius_km": float(m.pickup_radius_km),
+            "commission_rate": float(CommissionService(db).rule_for(b.id).rate), "pickup_radius_km": float(m.pickup_radius_km),
             "contact_name": m.contact_name, "registration_number": m.registration_number, "tin": m.tin,
             "submitted_at": m.submitted_at, "reviewed_at": m.reviewed_at, "rejection_reason": m.rejection_reason}
 
@@ -63,7 +64,7 @@ def applications(status: str | None = Query(None, max_length=20), page: Page = D
             .where(MarketplaceAccount.status != "NOT_ENROLLED").order_by(MarketplaceAccount.submitted_at.desc()))
     if status:
         stmt = stmt.where(MarketplaceAccount.status == status)
-    return paginate(db, stmt, page, _application_out)
+    return paginate(db, stmt, page, lambda m: _application_out(m, db))
 
 
 @router.get("/marketplace-applications/{application_id}")
@@ -73,7 +74,7 @@ def application_detail(application_id: str, db: Session = Depends(get_db)):
         raise not_found("Application")
     b = account.business
     services = db.scalars(select(Service).where(Service.business_id == b.id, Service.active.is_(True)).order_by(Service.name))
-    return {**_application_out(account), "business": {"description": b.description, "phone": b.phone, "address": b.address,
+    return {**_application_out(account, db), "business": {"description": b.description, "phone": b.phone, "address": b.address,
             "latitude": b.latitude, "longitude": b.longitude, "pickup_enabled": b.pickup_enabled, "pickup_fee": b.pickup_fee,
             "hours": hours_out(b.hours)},
             "services": [{"name": s.name, "price": s.price, "pricing_model": s.pricing_model} for s in services],
@@ -86,6 +87,8 @@ def decide(application_id: str, decision: Literal["approve", "reject", "suspend"
     account = db.get(MarketplaceAccount, application_id)
     if not account:
         raise not_found("Application")
+    if payload.commission_rate is not None:
+        require_pricing_role(actor)
     account = MarketplaceAdminService(db).decide(account, decision, actor, payload.reason, payload.commission_rate)
     return {"id": account.id, "status": account.status}
 

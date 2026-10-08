@@ -143,7 +143,7 @@ class MarketplaceAccount(Base):
     business_id: Mapped[str] = mapped_column(ForeignKey("businesses.id"), unique=True, index=True)
     # NOT_ENROLLED → PENDING_REVIEW → ACTIVE | REJECTED;  ACTIVE ⇄ SUSPENDED;  REJECTED → PENDING_REVIEW
     status: Mapped[str] = mapped_column(String(20), index=True, default="NOT_ENROLLED")
-    commission_rate: Mapped[Decimal] = mapped_column(Numeric(5, 2), default=Decimal("5.00"))
+    # Commission terms live in marketplace_commission_rules (versioned), not on the account.
     pickup_radius_km: Mapped[Decimal] = mapped_column(Numeric(5, 1), default=Decimal("8"))
     contact_name: Mapped[str | None] = mapped_column(String(120))
     registration_number: Mapped[str | None] = mapped_column(String(60))
@@ -238,6 +238,10 @@ class Order(Base):
     discount: Mapped[int] = mapped_column(Integer, default=0)
     total: Mapped[int] = mapped_column(Integer)
     notes: Mapped[str] = mapped_column(String(500), default="")
+    # Marketplace orders only: the commission rule and rate in force when the order was placed. Later rule changes
+    # never re-price an existing order.
+    commission_rule_id: Mapped[str | None] = mapped_column(String(36))
+    commission_rate: Mapped[Decimal | None] = mapped_column(Numeric(5, 2))
     # Optional name written on a guest walk-in order's slip ("Mama Asha"); the customer record stays the shared guest.
     guest_name: Mapped[str | None] = mapped_column(String(120))
     # When the laundry promised the clothes would be ready. Drives "due today" and "overdue".
@@ -303,13 +307,21 @@ class Payment(Base):
 
 
 class Commission(Base):
+    """Commission ledger. One EARNED entry when a Marketplace order completes, at most one REVERSED entry (negative
+    amount) if its payment is refunded. Entries are never edited; sums give the net."""
     __tablename__ = "commissions"
+    __table_args__ = (UniqueConstraint("order_id", "entry_type", name="uq_commission_order_entry"),
+                      Index("ix_commissions_business_created", "business_id", "created_at"))
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uuid)
-    order_id: Mapped[str] = mapped_column(ForeignKey("orders.id"), unique=True)
+    order_id: Mapped[str] = mapped_column(ForeignKey("orders.id"), index=True)
     business_id: Mapped[str] = mapped_column(ForeignKey("businesses.id"), index=True)
+    entry_type: Mapped[str] = mapped_column(String(10), default="EARNED")  # EARNED | REVERSED
+    rule_id: Mapped[str | None] = mapped_column(String(36))
     rate: Mapped[Decimal] = mapped_column(Numeric(5, 2))
     base_amount: Mapped[int] = mapped_column(Integer)
     amount: Mapped[int] = mapped_column(Integer)
+    # How the basis was built (services, discount, pickup fee, minimum applied) — for disputes and audits.
+    basis_json: Mapped[str] = mapped_column(Text, default="{}")
     status: Mapped[str] = mapped_column(String(12), default="ACCRUED")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 

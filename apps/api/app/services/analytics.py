@@ -18,7 +18,6 @@ from ..core.config import settings
 from ..domain import order_states as S
 from ..domain import permissions as P
 from ..domain.clock import LOCAL_TZ, now_utc
-from ..domain.money import percentage_of
 from ..domain.periods import Period, local_midnight, resolve
 from ..models import (
     Business,
@@ -32,8 +31,11 @@ from ..models import (
     OrderStatusEvent,
     Payment,
     Service,
+    SubscriptionPayment,
     User,
 )
+from . import entitlements as E
+from .commission import CommissionService, commission_terms
 
 MIN_COMPARE_ORDERS = 5  # below this many orders in the comparison period, a % change is noise and is not shown
 MIN_INSIGHT_ORDERS = 10
@@ -163,15 +165,18 @@ class BusinessAnalytics:
         orders, gmv, customers = self.db.execute(select(
             func.count(), func.coalesce(func.sum(Order.total), 0), func.count(distinct(Order.customer_id))).where(mp)).one()
         accrued = self._scalar(select(func.sum(Commission.amount)).join(Order, Order.id == Commission.order_id).where(mp))
-        open_base = self._scalar(select(func.sum(Order.subtotal)).where(mp, Order.status != S.COMPLETED))
         account = self.db.scalar(select(MarketplaceAccount).where(MarketplaceAccount.business_id == self.bid))
-        rate = account.commission_rate if account else 0
-        pending = percentage_of(open_base, rate) if open_base else 0
+        current = CommissionService(self.db).rule_for(self.bid, self.now)
+        rate = current.rate
+        # Estimate on not-yet-completed orders, each at the rate it was placed under.
+        pending = sum(CommissionService(self.db).preview(o).amount for o in self.db.scalars(
+            select(Order).where(mp, Order.status != S.COMPLETED)))
         return {"status": account.status if account else "NOT_ENROLLED", "commission_rate": float(rate),
                 "orders": orders, "sales": int(gmv), "customers": customers, "average_order": avg_int(int(gmv), orders),
                 "commission_accrued": accrued, "commission_pending": pending, "net": int(gmv) - accrued - pending,
                 "share_orders": pct(orders, all_orders), "share_sales": pct(int(gmv), all_sales),
-                "rating": float(self.business.rating), "review_count": self.business.review_count}
+                "rating": float(self.business.rating), "review_count": self.business.review_count,
+                "commission_terms": commission_terms(current)}
 
     def operations(self, start: datetime, until: datetime) -> dict:
         stages = dict(self.db.execute(
@@ -330,7 +335,10 @@ class BusinessAnalytics:
                 biz, LIVE, Order.created_at >= today.start, Order.created_at < today.until)), "previous": None, "change_pct": None}
 
         if "performance.view" in caps and has_orders:
-            out |= self.performance()
+            if "performance_insights" in E.resolve(self.db, self.bid, now).features:
+                out |= self.performance()
+            else:
+                out["performance_locked"] = True  # shown as an upgrade card, not as missing data
         return out
 
     def performance(self) -> dict:
@@ -407,12 +415,12 @@ class BusinessAnalytics:
     SECTIONS = {
         "daily": ["summary", "day_book", "money", "payments", "sources", "operations", "customers", "marketplace", "day_close"],
         "weekly": ["summary", "money", "operations", "customers", "marketplace", "daily", "services"],
-        "monthly": ["summary", "money", "payments", "marketplace", "services", "customers", "top_customers", "operations",
-                    "daily", "weekdays", "insights"],
+        "monthly": ["summary", "money", "payments", "marketplace", "launder_costs", "services", "customers", "top_customers",
+                    "operations", "daily", "weekdays", "insights"],
         "sales": ["summary", "money", "daily", "services", "sources"],
         "orders": ["summary", "day_book", "sources", "operations", "daily"],
         "customers": ["summary", "customers", "top_customers"],
-        "marketplace": ["summary", "marketplace", "daily"],
+        "marketplace": ["summary", "marketplace", "launder_costs", "daily"],
         "payments": ["summary", "money", "payments", "daily"],
     }
     DEFAULT_PERIOD = {"daily": "today", "weekly": "this_week", "monthly": "this_month", "sales": "this_month",
@@ -458,6 +466,8 @@ class BusinessAnalytics:
             "marketplace": mp,
             "services": services,
         }
+        if "launder_costs" in sections:
+            data["launder_costs"] = self.launder_costs(start, until)
         if "day_book" in sections:
             completed = self._scalar(select(func.count()).where(Order.business_id == self.bid, Order.completed_at >= start,
                                                                 Order.completed_at < until))
@@ -474,6 +484,21 @@ class BusinessAnalytics:
         if "day_close" in sections:
             data["day_close"] = self.day_close_view(period, coll) if period.days == 1 else None
         return data
+
+    def launder_costs(self, start: datetime, end: datetime) -> dict:
+        """What this laundry paid Launder in the period: subscription payments and net Marketplace commission.
+        Kept apart from sales; commission counts when earned (order completed) less reversals (refunds)."""
+        subscription = self._scalar(select(func.sum(SubscriptionPayment.amount)).where(
+            SubscriptionPayment.business_id == self.bid, SubscriptionPayment.received_at >= start,
+            SubscriptionPayment.received_at < end))
+        earned = self._scalar(select(func.sum(Commission.amount)).where(
+            Commission.business_id == self.bid, Commission.entry_type == "EARNED", Commission.created_at >= start,
+            Commission.created_at < end))
+        reversed_ = -self._scalar(select(func.sum(Commission.amount)).where(
+            Commission.business_id == self.bid, Commission.entry_type == "REVERSED", Commission.created_at >= start,
+            Commission.created_at < end))
+        return {"subscription_paid": subscription, "commission_earned": earned, "commission_reversed": reversed_,
+                "commission_net": earned - reversed_, "total": subscription + earned - reversed_}
 
     # ---- end of day -----------------------------------------------------------------------------------------------
     def day_close_view(self, period: Period, coll: dict | None = None) -> dict:

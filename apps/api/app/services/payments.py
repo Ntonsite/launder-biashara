@@ -165,6 +165,9 @@ class PaymentService:
     def refund(self, payment: Payment, actor_id: str, reason: str | None) -> Payment:
         order = self.db.get(Order, payment.order_id)
         self._move(payment, order, "REFUNDED", actor_id)
+        from .commission import CommissionService  # local import: commission → models only, avoids a cycle
+
+        CommissionService(self.db).reverse(order, reason or "Payment refunded")
         audit(self.db, actor_id, "PAYMENT_REFUND_REASON", "payment", payment.id, reason=reason)
         self.db.commit()
         return payment

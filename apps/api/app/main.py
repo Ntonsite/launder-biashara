@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -13,11 +14,46 @@ from .core.config import settings
 from .core.errors import AppError, install_error_handlers
 from .core.logging import RequestContextMiddleware, configure_logging
 from .database import SessionLocal, get_db
-from .routers import admin, auth, business, business_reports, customer, marketplace, payments
+from .routers import (
+    admin,
+    admin_monetization,
+    auth,
+    business,
+    business_billing,
+    business_reports,
+    customer,
+    marketplace,
+    payments,
+)
 
 configure_logging()
 log = logging.getLogger("launder.app")
 MEDIA_DIR = Path(__file__).resolve().parent / "static" / "media"
+
+
+def run_billing_once() -> None:
+    """One billing pass, guarded by a Postgres advisory lock so several API workers never run it at the same time."""
+    from .services.billing import BillingService
+
+    with SessionLocal() as db:
+        if not db.scalar(text("SELECT pg_try_advisory_lock(424242)")):
+            return
+        try:
+            stats = BillingService(db).run()
+            if any(stats.values()):
+                log.info("billing_cycle", extra=stats)
+        finally:
+            db.execute(text("SELECT pg_advisory_unlock(424242)"))
+            db.commit()
+
+
+async def billing_loop() -> None:
+    while True:
+        try:
+            await asyncio.to_thread(run_billing_once)
+        except Exception:  # never let a billing error take the API down; it is logged and retried next tick
+            log.exception("billing_cycle_failed")
+        await asyncio.sleep(settings.billing_interval_seconds)
 
 
 @asynccontextmanager
@@ -32,7 +68,10 @@ async def lifespan(_: FastAPI):
             if seed(db):
                 log.info("demo_data_seeded")
     log.info("api_started", extra={"env": settings.app_env, "ratelimit_backend": ratelimit.backend_name()})
+    task = asyncio.create_task(billing_loop()) if settings.billing_interval_seconds > 0 else None
     yield
+    if task:
+        task.cancel()
 
 
 app = FastAPI(title="Launder API", version="1.1.0", docs_url="/api/docs", openapi_url="/api/openapi.json", lifespan=lifespan)
@@ -60,6 +99,6 @@ def ready(db: Session = Depends(get_db)):
     return {"status": "ready", "database": "connected", "ratelimit": ratelimit.backend_name()}
 
 
-for router in (auth.router, marketplace.router, customer.router, business.router, business_reports.router, admin.router,
-               payments.router):
+for router in (auth.router, marketplace.router, customer.router, business.router, business_reports.router,
+               business_billing.router, admin.router, admin_monetization.router, payments.router):
     app.include_router(router, prefix="/api/v1")

@@ -10,13 +10,11 @@ from ..core.errors import AppError, not_found
 from ..domain import order_states as S
 from ..domain.clock import as_utc, now_utc
 from ..domain.geo import haversine_km
-from ..domain.money import percentage_of
 from ..domain.phone import normalize_tz_phone
 from ..models import (
     Address,
     Business,
     BusinessCustomer,
-    Commission,
     Customer,
     MarketplaceAccount,
     Order,
@@ -30,6 +28,7 @@ from ..models import (
 from ..schemas.business import BusinessOrderCreate
 from ..schemas.orders import CartItem, CustomerOrderCreate
 from .audit import audit
+from .commission import CommissionService
 from .marketplace import MarketplaceService
 from .notifications import notify_status
 from .payments import PaymentService, payment_out
@@ -131,6 +130,7 @@ class OrderService:
         order.due_at = self.promised_due([x["service_id"] for x in quote.lines], order.pickup_window_end or now_utc())
         order.events.append(OrderStatusEvent(from_status=None, to_status=S.NEW, actor_id=user.id))
         try:
+            CommissionService(self.db).snapshot(order)
             self._insert(order)
         except IntegrityError:
             # Same idempotency key submitted concurrently: the other request won, return its order.
@@ -304,13 +304,7 @@ class OrderService:
         return order
 
     def _record_commission(self, order: Order) -> None:
-        if order.source != "MARKETPLACE":
-            return
-        account = self.db.scalar(select(MarketplaceAccount).where(MarketplaceAccount.business_id == order.business_id))
-        rate = Decimal(account.commission_rate) if account else Decimal("0")
-        # Commission is charged on the laundry services, not on the pickup fee passed through to the customer.
-        self.db.add(Commission(order_id=order.id, business_id=order.business_id, rate=rate, base_amount=order.subtotal,
-                               amount=percentage_of(order.subtotal, rate)))
+        CommissionService(self.db).earn(order)  # Marketplace only; the service decides eligibility and terms
 
     def set_due(self, order: Order, due_at: datetime, actor: User) -> Order:
         if order.status in S.TERMINAL:

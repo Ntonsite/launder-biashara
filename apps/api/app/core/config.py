@@ -36,7 +36,8 @@ class Settings(BaseSettings):
     payment_provider: Literal["sandbox"] = "sandbox"
     payment_webhook_secret: str = "sandbox-webhook-secret"
     public_base_url: str = "http://127.0.0.1:8000"
-    default_commission_rate: str = "5.00"
+    # Billing cycle (renewals, trial and pilot ends, overdue invoices) runs inside the API every N seconds; 0 = off.
+    billing_interval_seconds: int = 900
 
     @model_validator(mode="after")
     def _production_guard(self):
