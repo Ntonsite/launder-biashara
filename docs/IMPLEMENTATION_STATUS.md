@@ -37,7 +37,7 @@ Audit and decisions: [BUSINESS_AUDIT.md](BUSINESS_AUDIT.md). Definitions: [ANALY
 | Roles | Done — owner, manager, cashier, staff, driver; enforced by the API, reflected in navigation |
 | Services & pricing | Done — categories, per item / per kg / package, archive instead of delete |
 | Staff | Done — owner adds managers, cashiers, staff, drivers |
-| Join marketplace | Done — readiness checklist → application → admin review |
+| Join marketplace | Done — optional; pitch with the current offer → readiness checklist (drafts) → terms → admin review, or accept an invitation → commission-free trial dashboard → accept standard terms to continue |
 | Marketplace orders and commission | Done — same order list; commission accrued on completion, Marketplace only |
 
 ## Commercial model
@@ -48,9 +48,16 @@ recorded payments, versioned Marketplace commission rules (default 5 %, laundry 
 refund reversals, business-specific terms, pilot programmes, finance role, pricing audit, revenue reporting with
 reconciliation. Provider **Plan & billing** page; admin **Monetization** console.
 
+**Marketplace activation** ([MONETIZATION.md](MONETIZATION.md#marketplace-activation-provider-opt-in-and-trials)):
+separate review / commercial / listing states, provider-initiated and admin-initiated (invitation) journeys,
+configurable commission-free trials that start when the laundry can actually receive orders, global launch control
+(closed, controlled pilot, open), scheduled idempotent lifecycle (start, reminders, expiry, conversion), trial
+management (grant, extend, end early), versioned agreements, waived-commission reporting and conversion analytics.
+
 ## Admin
 
-Overview metrics, marketplace applications (detail, approve/reject/suspend/reinstate with rules and reasons),
+Overview metrics, **Marketplace** console (overview with funnel, expiry pipeline and trial/standard/waived
+commission; laundries with review, invitation, activation, suspension, trial management and history; trials),
 businesses, orders, customers, payments (refund), reviews (hide/publish with rating recompute), audit trail
 with actor and metadata. All enforced by backend RBAC.
 
@@ -58,7 +65,7 @@ with actor and metadata. All enforced by backend RBAC.
 
 | Area | Status |
 |---|---|
-| PostgreSQL + PostGIS | The only supported database (dev, tests, Docker). Migrations 0001–0003; geography GIST index and analytics indexes |
+| PostgreSQL + PostGIS | The only supported database (dev, tests, Docker). Migrations 0001–0005; geography GIST index and analytics indexes |
 | Redis | Rate limiting (login, OTP) with in-process fallback |
 | Auth | Access 30 min + rotating refresh with reuse detection; OTP 5 min, 5 attempts, 60 s resend, 5 per 15 min |
 | Errors, logs, health | Error envelope with request id; JSON logs; `/health`, `/health/ready` |
@@ -83,7 +90,8 @@ with actor and metadata. All enforced by backend RBAC.
 11. **Thermal printers** — slips print through the browser (80 mm layout); direct ESC/POS printing is not built.
 12. **Subscription payment gateway** — subscription payments are recorded by finance; no online collection yet.
 13. **Tax on invoices** — no VAT / TRA EFD handling on Launder's invoices.
-14. **Billing notifications by SMS/e-mail** — in-app only.
+14. **Billing notifications by SMS/e-mail** — in-app only (also Marketplace trial reminders).
+15. **Marketplace rollout by area** — the controlled pilot is per laundry (launch group), not by neighbourhood.
 
 ## Phase 2 (not Phase 1)
 

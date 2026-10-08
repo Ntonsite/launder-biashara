@@ -1,20 +1,22 @@
 # Test report — Phase 1
 
 Run on 2026-10-08, Windows 11, Python 3.12, Node 22, Flutter 3.41.6 / Dart 3.11, Docker 29.
-Updated the same day for the provider workspace and walk-in pass (API and web rows below re-run; mobile unchanged).
+Updated the same day for the provider workspace and walk-in pass, the commercial model, and Marketplace activation
+and trials (API and web rows below re-run; mobile unchanged).
 Everything below was actually executed; nothing is extrapolated.
 
 ## Summary
 
 | Suite | Result |
 |---|---|
-| API — pytest (fresh `launder_test` database on the PostGIS container, migrations 0001–0004 + seed) | **67 passed** |
+| API — pytest (fresh `launder_test` database on the PostGIS container, migrations 0001–0005 + seed) | **77 passed** |
 | API — ruff | clean |
 | API on PostgreSQL 16 + PostGIS 3.4 (Docker) | migrations to `0003` applied over existing data (backfill checked: every order has a promised time, every paid payment a `paid_at`); `ST_DWithin` uses `ix_businesses_geog`; overdue/pipeline counts use `ix_orders_business_status`; Redis rate limiting active |
 | Web — TypeScript (`tsc -b`) | clean |
 | Web — Vitest | **15 passed** |
-| Web — production build | OK (main bundle 119 KB gzip; business/admin lazy-loaded) |
-| Web — Playwright E2E, Chromium, against Docker API | **13 passed** (customer journey, Swahili, admin review, walk-in counter, dashboard click-through + reports, staff role, phone dashboard, finance admin monetization, read-only admin, free laundry → Pro trial, pilot laundry on desktop and phone); provider tests also passed with `--repeat-each=2` |
+| Web — production build | OK (main bundle 148 KB gzip, up from 119 KB mostly because both language catalogues grew; business/admin lazy-loaded) |
+| Web — Playwright E2E, Chromium, against Docker API | **20 passed, 1 skipped** (customer journey, Swahili, admin review, walk-in counter, dashboard click-through + reports, staff role, phone dashboard, finance admin monetization, read-only admin, free laundry → Pro trial, pilot laundry; Marketplace: join → admin approval → trial, trial dashboard + dashboard reminder on desktop and phone, expired trial, invitation, admin rollout/trials/settings, read-only settings). Passed with 1 worker and with 2; one earlier 2-worker run timed out once in the FreshWash staff step of the customer journey (not reproduced; tests share the demo laundry) |
+| API — dev database (Docker) | migration `0005` applied over existing data: the six seeded laundries became APPROVED/STANDARD/LISTED (or PENDING_REVIEW) with a STANDARD agreement; demo seed added a running trial with orders, an invitation with 45-day terms and an expired trial |
 | Web — Docker image (nginx) | builds; serves app, proxies `/api` and `/media`, SPA deep links |
 | Mobile — `flutter analyze` | no issues |
 | Mobile — `flutter test` (unit, repository, widget, layout) | **35 passed** |
@@ -85,6 +87,32 @@ was put on a new trial, losing its credit; approval checked plan eligibility aft
 stored "6" instead of "6.00"; "days left" rounded down (a new 14-day trial showed 13); the admin login rejected
 finance administrators.
 
+## Marketplace activation and trials (API, `test_marketplace_program.py`, 10 tests)
+
+The brief's 17 scenarios: a laundry uses Launder Business only (walk-in order completed, no commission, not public);
+saves a draft; is refused with "prices" missing for a free service; submits; admin requests changes (reason
+required), the laundry resubmits, admin approves → TRIAL_ACTIVE, 30 days at 0 %, standard 5 %, visible. A Marketplace
+order is charged 0 % with TZS 1,000 waived and the agreement recorded; walk-in still not charged; trial stats show 2
+orders, TZS 30,000, TZS 1,500 saved, 2 new customers. Reminders at 7 and 2 days, never repeated; expiry without
+acceptance → TRIAL_EXPIRED, storefront and new orders refused, walk-in still works, rerun changes nothing; the order
+placed during the trial completes afterwards at 0 %; the laundry accepts → ACTIVE at 5 % (TZS 1,000 on the next order);
+admin overview reconciles net = trial + standard and reports waived; provider report separates trial, standard and
+waived. Settings to 45 days / 2 %: new approvals get them, the earlier agreement keeps 30 days / 0 %; an invited
+laundry with 60 days / 1 % confirms and starts without review; the setting change is in the pricing audit.
+Suspension hides and blocks orders; reactivation adds the 3 suspended days back. Marketplace OFF: discovery empty,
+storefronts 404, dashboard and walk-in work, approval keeps the trial waiting (no days used); PILOT: only the launch
+group is visible, adding a laundry to it starts its 30 days; reopening starts waiting trials immediately.
+Conflicts: a 3 % special rate does not cancel a 0 % trial; a 1 % special rate beats a 2 % trial; another promotion
+over the trial dates and ending the trial's rule are refused. Operations admins cannot set trial terms, extend or
+change settings; extension limit; ending early requires a reason and converts when terms were accepted in advance;
+one trial per laundry; invalid settings refused; self-enrolment closed but invitations work; providers cannot reach
+admin endpoints; ineligible offers are not shown.
+
+The existing admin test found that participation decisions no longer reached the general admin audit log; fixed
+(every event now goes to the audit log and the participation history). Existing tests were updated where behaviour
+intentionally changed: approval now starts the default trial (TRIAL_ACTIVE), and the commission scenarios approve
+"without trial" to keep exercising the 5 % default.
+
 ## Web
 
 * Vitest: catalog parity EN/SW, no untranslated Swahili, every `t("…")` key exists, no inline language
@@ -100,6 +128,12 @@ finance administrators.
   nothing (buttons hidden for every role, slip without the laundry's name); order rows marked `role="row"` lost
   their link semantics; the site header/footer styles leaked into the report header and slip; a legacy `.bars`
   rule broke the charts; the payments list showed full totals for part-paid orders.
+* Marketplace E2E (`e2e/marketplace.spec.ts`): a new laundry sees the pitch and the 30-day offer → *Join
+  Marketplace* → 5 of 5 ready → accepts terms → *Under review*; the operations admin finds it under Marketplace →
+  Laundries → approves → *Free trial*; the laundry sees "30 days left", 0 % now, 5 % after. Mwenge (seeded, 7 days
+  left) sees the dashboard reminder and trial results on desktop and a Pixel 7 without horizontal scroll; Kariakoo
+  sees the expired state and the accept action; Kawe sees its invitation with 45 days; the finance admin sees the
+  launch banner, KPIs, expiry pipeline, trial buckets and the settings; the operations admin sees settings read-only.
 * Playwright found and drove the fix for one real bug: after OTP, first-time customers skipped the name
   step at checkout (the order would have failed). Fixed in `customer/SignIn.tsx` and page guards.
 

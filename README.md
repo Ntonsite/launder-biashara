@@ -46,6 +46,7 @@ npm run dev                               # proxies /api and /media to 127.0.0.1
 | FreshWash Laundry (marketplace, live; ten weeks of trading history) | `owner@freshwash.co.tz` / `Demo123!` · staff `staff@freshwash.co.tz` / `Demo123!` |
 | T-Laundry (marketplace application pending review) | `owner@t-laundry.co.tz` / `Demo123!` |
 | Other live laundries | `owner@cleanpro.co.tz`, `owner@safilaundry.co.tz`, `owner@bahari.co.tz`, `owner@upangaexpress.co.tz` / `Demo123!` |
+| Marketplace trials | `owner@mwengewash.co.tz` (trial running, 7 days left), `owner@kariakooquick.co.tz` (trial ended, not continued), `owner@kawefresh.co.tz` (invited with 45 days) / `Demo123!` |
 | Platform admin | `admin@launder.co.tz` / `Admin123!` (super admin) · `finance@launder.co.tz` (pricing & billing) · `support@launder.co.tz` (read-only monetization), same password |
 
 Business sign-in: `/business/login`. Admin: `/admin/login`. These credentials exist only when `AUTO_SEED=true`,
