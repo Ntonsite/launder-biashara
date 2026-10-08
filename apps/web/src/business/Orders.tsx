@@ -1,357 +1,483 @@
-import { FormEvent, useCallback, useEffect, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
+import type { TFunction } from "i18next";
+import {
+  Link,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { ArrowRight, Banknote, Check, Minus, Plus } from "lucide-react";
-import { api } from "../lib/api";
-import { dateTime, errorMessage, money, statusLabel } from "../lib/format";
+import {
+  ArrowRight,
+  Banknote,
+  Check,
+  Download,
+  PackageCheck,
+  Plus,
+  Printer,
+  Smartphone,
+  X,
+} from "lucide-react";
+import { api, download } from "../lib/api";
+import {
+  dateTime,
+  errorMessage,
+  itemsSummary,
+  money,
+  statusLabel,
+  time,
+} from "../lib/format";
 import { Notice, StatusPill } from "../customer/ui";
 import type { OrderDetail, ServiceData } from "../customer/types";
 import { AppFrame, Pagination } from "./shell";
+import { useCan } from "./ui";
 
 export type OrderRow = {
   id: string;
   order_number: string;
+  customer_id: string;
   customer_name: string;
   phone: string;
   source: string;
   status: string;
   fulfillment: string;
   payment_status: string;
+  payment_method: string;
   total: number;
+  amount_paid: number;
   created_at: string;
   pickup_window_start: string | null;
+  pickup_address: string | null;
+  due_at: string | null;
+  ready_at: string | null;
+  due_state: "OVERDUE" | "DUE_SOON" | "DUE_TODAY" | null;
+  items: { name: string; quantity: number; pricing_model: string }[];
 };
 
-const FILTERS = [
-  "",
-  "NEW",
-  "ACCEPTED,AWAITING_PICKUP,RECEIVED,WASHING,DRYING,IRONING,QUALITY_CHECK",
-  "READY,OUT_FOR_DELIVERY",
-  "DELIVERED,COMPLETED",
-  "CANCELLED,REJECTED",
-];
+const VIEWS = [
+  "all",
+  "new",
+  "in_progress",
+  "ready",
+  "delivery",
+  "completed",
+  "cancelled",
+] as const;
+const DUE = ["overdue", "today", "uncollected"] as const;
+const TERMINAL = ["DELIVERED", "COMPLETED", "CANCELLED", "REJECTED"];
 
-export function OrderRows({ rows }: { rows: OrderRow[] | null }) {
+/** How urgent an order is, in words staff use: "3 h late", "Due 4:00 PM", "Ready 3 days". */
+export function DueBadge({
+  o,
+}: {
+  o: Pick<OrderRow, "due_at" | "due_state" | "status" | "ready_at">;
+}) {
+  const { t } = useTranslation();
+  if (o.status === "READY" && o.ready_at) {
+    const days = Math.floor(
+      (Date.now() - new Date(o.ready_at).getTime()) / 86_400_000,
+    );
+    return days >= 2 ? (
+      <span className="due waiting">
+        {t("ops.due.readyDays", { count: days })}
+      </span>
+    ) : null;
+  }
+  if (!o.due_at || TERMINAL.includes(o.status) || o.status === "READY")
+    return null;
+  if (o.due_state === "OVERDUE") {
+    const hours = Math.max(
+      1,
+      Math.round((Date.now() - new Date(o.due_at).getTime()) / 3_600_000),
+    );
+    return (
+      <span className="due overdue">
+        {hours < 24
+          ? t("ops.due.lateHours", { count: hours })
+          : t("ops.due.lateDays", { count: Math.round(hours / 24) })}
+      </span>
+    );
+  }
+  if (o.due_state === "DUE_SOON" || o.due_state === "DUE_TODAY")
+    return (
+      <span className={`due ${o.due_state === "DUE_SOON" ? "soon" : "today"}`}>
+        {t("ops.due.at", { time: time(o.due_at) })}
+      </span>
+    );
+  return (
+    <span className="due later">
+      {t("ops.due.on", { date: dateTime(o.due_at) })}
+    </span>
+  );
+}
+
+export function OrderRows({
+  rows,
+  empty,
+}: {
+  rows: OrderRow[] | null;
+  empty?: string;
+}) {
   const { t } = useTranslation();
   if (!rows) return <div className="tableLoading">{t("common.loading")}</div>;
   if (!rows.length)
     return (
       <div className="empty">
-        <p>{t("biz.noOrders")}</p>
+        <p>{empty ?? t("biz.noOrders")}</p>
       </div>
     );
   return (
-    <>
-      <div className="tableHead">
+    <div className="orderTable">
+      <div className="orderHead" aria-hidden="true">
         <span>{t("biz.col.order")}</span>
         <span>{t("biz.col.customer")}</span>
-        <span>{t("biz.col.source")}</span>
+        <span>{t("ops.col.items")}</span>
+        <span>{t("ops.col.due")}</span>
         <span>{t("biz.col.status")}</span>
         <span>{t("biz.col.total")}</span>
       </div>
       {rows.map((r) => (
-        <Link to={`/app/orders/${r.id}`} className="order" key={r.id}>
-          <b>{r.order_number}</b>
+        <Link
+          to={`/app/orders/${r.id}`}
+          className={`orderRow ${r.due_state === "OVERDUE" ? "isOverdue" : ""}`}
+          key={r.id}
+        >
+          <span className="num">
+            <b>{r.order_number}</b>
+            <small>
+              {dateTime(r.created_at)} · {t(`biz.source.${r.source}`)}
+            </small>
+          </span>
           <span>
             {r.customer_name}
             <small>{r.phone}</small>
           </span>
-          <span>{t(`biz.source.${r.source}`)}</span>
-          <StatusPill status={r.status} />
-          <b>
-            {money(r.total)}
+          <span className="itemsCell">
+            {itemsSummary(r.items) || "—"}
+            {r.fulfillment === "PICKUP" && (
+              <small>{t("checkout.pickup")}</small>
+            )}
+          </span>
+          <span>
+            <DueBadge o={r} />
+          </span>
+          <span>
+            <StatusPill status={r.status} />
+          </span>
+          <span className="amount">
+            <b>{money(r.total)}</b>
             <small className={`pay ${r.payment_status.toLowerCase()}`}>
               {t(`payment.${r.payment_status}`)}
             </small>
-          </b>
+          </span>
         </Link>
       ))}
-    </>
+    </div>
   );
 }
 
+const FILTER_KEYS = [
+  "q",
+  "status",
+  "source",
+  "due",
+  "payment",
+  "date_from",
+  "date_to",
+  "customer_id",
+];
+
 export function Orders() {
   const { t } = useTranslation();
-  const [q, setQ] = useState("");
-  const [filter, setFilter] = useState("");
-  const [page, setPage] = useState(1);
+  const can = useCan();
+  const [params, setParams] = useSearchParams();
+  const view = params.get("view") ?? "all";
+  const page = Number(params.get("page") ?? 1);
+  const [q, setQ] = useState(params.get("q") ?? "");
   const [rows, setRows] = useState<OrderRow[] | null>(null);
   const [total, setTotal] = useState(0);
+  const [counts, setCounts] = useState<Record<string, number>>({});
   const [error, setError] = useState("");
   const pageSize = 20;
 
+  const update = useCallback(
+    (changes: Record<string, string | null>) => {
+      const next = new URLSearchParams(params);
+      for (const [k, v] of Object.entries(changes)) {
+        if (v) next.set(k, v);
+        else next.delete(k);
+      }
+      if (!("page" in changes)) next.delete("page");
+      setParams(next, { replace: "q" in changes });
+    },
+    [params, setParams],
+  );
+
+  // Debounced search writes into the URL so it survives back/forward and can be shared.
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if ((params.get("q") ?? "") !== q) update({ q: q || null });
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [q]);
+
+  const query = useMemo(() => {
+    const p = new URLSearchParams({
+      view,
+      page: String(page),
+      page_size: String(pageSize),
+    });
+    for (const k of FILTER_KEYS) {
+      const v = params.get(k);
+      if (v) p.set(k, v);
+    }
+    return p;
+  }, [params, view, page]);
+
   useEffect(() => {
     const controller = new AbortController();
-    const timer = setTimeout(() => {
-      const params = new URLSearchParams({
-        page: String(page),
-        page_size: String(pageSize),
-      });
-      if (q) params.set("q", q);
-      if (filter) params.set("status", filter);
-      setRows(null);
-      api<{ items: OrderRow[]; total: number }>(
-        `/api/v1/business/orders?${params}`,
-        { auth: "business", signal: controller.signal },
-      )
-        .then((d) => {
-          setRows(d.items);
-          setTotal(d.total);
-        })
-        .catch(
-          (err) => err.name !== "AbortError" && setError(errorMessage(err)),
-        );
-    }, 250);
-    return () => {
-      clearTimeout(timer);
-      controller.abort();
-    };
-  }, [q, filter, page]);
+    setRows(null);
+    setError("");
+    api<{ items: OrderRow[]; total: number }>(
+      `/api/v1/business/orders?${query}`,
+      {
+        auth: "business",
+        signal: controller.signal,
+      },
+    )
+      .then((d) => {
+        setRows(d.items);
+        setTotal(d.total);
+      })
+      .catch((err) => err.name !== "AbortError" && setError(errorMessage(err)));
+    api<Record<string, number>>("/api/v1/business/orders/counts", {
+      auth: "business",
+      signal: controller.signal,
+    })
+      .then(setCounts)
+      .catch(() => undefined);
+    return () => controller.abort();
+  }, [query]);
 
   async function exportCsv() {
-    const params = new URLSearchParams({ page: "1", page_size: "100" });
-    if (q) params.set("q", q);
-    if (filter) params.set("status", filter);
-    const d = await api<{ items: OrderRow[] }>(
-      `/api/v1/business/orders?${params}`,
-      { auth: "business" },
-    );
-    const header = [
-      "Order",
-      "Customer",
-      "Phone",
-      "Source",
-      "Status",
-      "Payment",
-      "Total TZS",
-      "Created",
-    ];
-    const csv = [
-      header,
-      ...d.items.map((x) => [
-        x.order_number,
-        x.customer_name,
-        x.phone,
-        x.source,
-        x.status,
-        x.payment_status,
-        x.total,
-        x.created_at,
-      ]),
-    ]
-      .map((row) =>
-        row.map((v) => `"${String(v).replaceAll('"', '""')}"`).join(","),
-      )
-      .join("\n");
-    const url = URL.createObjectURL(
-      new Blob([csv], { type: "text/csv;charset=utf-8" }),
-    );
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `orders-${new Date().toISOString().slice(0, 10)}.csv`;
-    link.click();
-    URL.revokeObjectURL(url);
+    const p = new URLSearchParams(query);
+    p.delete("page");
+    p.delete("page_size");
+    try {
+      await download(
+        `/api/v1/business/orders/export.csv?${p}`,
+        "business",
+        "orders.csv",
+      );
+    } catch (err) {
+      setError(errorMessage(err));
+    }
   }
+
+  const views = can("orders.deliveries_only")
+    ? (["all", "delivery"] as const)
+    : VIEWS;
+  const active = FILTER_KEYS.filter((k) => k !== "q" && params.get(k));
 
   return (
     <AppFrame
       title={t("biz.nav.orders")}
       action={
-        <Link className="primary" to="/app/orders/new">
-          <Plus /> {t("biz.newOrder")}
-        </Link>
+        can("orders.create") && (
+          <Link className="primary" to="/app/orders/new">
+            <Plus aria-hidden /> {t("biz.newOrder")}
+          </Link>
+        )
       }
     >
-      <div className="toolbar">
+      <nav className="viewTabs" aria-label={t("ops.orders.views")}>
+        {views.map((v) => (
+          <button
+            key={v}
+            className={view === v ? "on" : ""}
+            aria-current={view === v ? "page" : undefined}
+            onClick={() => update({ view: v === "all" ? null : v })}
+          >
+            {t(`ops.view.${v}`)}
+            {counts[v] != null && <span>{counts[v]}</span>}
+          </button>
+        ))}
+      </nav>
+      {!can("orders.deliveries_only") && (
+        <div
+          className="urgency"
+          role="group"
+          aria-label={t("ops.orders.urgency")}
+        >
+          {DUE.map((d) => (
+            <button
+              key={d}
+              className={`chip ${d} ${params.get("due") === d ? "on" : ""}`}
+              aria-pressed={params.get("due") === d}
+              onClick={() =>
+                update({ due: params.get("due") === d ? null : d })
+              }
+            >
+              {t(`ops.dueFilter.${d}`)} <b>{counts[`due_${d}`] ?? 0}</b>
+            </button>
+          ))}
+        </div>
+      )}
+      <div className="toolbar filters">
         <input
           value={q}
-          onChange={(e) => {
-            setQ(e.target.value);
-            setPage(1);
-          }}
+          onChange={(e) => setQ(e.target.value)}
           placeholder={t("biz.searchOrders")}
           aria-label={t("biz.searchOrders")}
+          type="search"
         />
+        <label className="inline">
+          <span>{t("ops.orders.from")}</span>
+          <input
+            type="date"
+            value={params.get("date_from") ?? ""}
+            onChange={(e) => update({ date_from: e.target.value || null })}
+          />
+        </label>
+        <label className="inline">
+          <span>{t("ops.orders.to")}</span>
+          <input
+            type="date"
+            value={params.get("date_to") ?? ""}
+            onChange={(e) => update({ date_to: e.target.value || null })}
+          />
+        </label>
         <select
-          value={filter}
-          onChange={(e) => {
-            setFilter(e.target.value);
-            setPage(1);
-          }}
-          aria-label={t("biz.col.status")}
+          value={params.get("source") ?? ""}
+          onChange={(e) => update({ source: e.target.value || null })}
+          aria-label={t("biz.col.source")}
         >
-          {FILTERS.map((f, i) => (
-            <option key={f} value={f}>
-              {t(`biz.filters.${i}`)}
+          <option value="">{t("ops.orders.anySource")}</option>
+          {["WALK_IN", "MARKETPLACE", "PHONE", "WHATSAPP"].map((s) => (
+            <option key={s} value={s}>
+              {t(`biz.source.${s}`)}
             </option>
           ))}
         </select>
-        <button className="outlineBtn exportBtn" onClick={exportCsv}>
-          {t("biz.exportCsv")}
-        </button>
+        <select
+          value={params.get("payment") ?? ""}
+          onChange={(e) => update({ payment: e.target.value || null })}
+          aria-label={t("checkout.payment")}
+        >
+          <option value="">{t("ops.orders.anyPayment")}</option>
+          {["outstanding", "unpaid", "paid", "processing"].map((s) => (
+            <option key={s} value={s}>
+              {t(`ops.paymentFilter.${s}`)}
+            </option>
+          ))}
+        </select>
+        {can("reports.operational") && (
+          <button className="outlineBtn" onClick={exportCsv}>
+            <Download aria-hidden /> {t("biz.exportCsv")}
+          </button>
+        )}
       </div>
+      {active.length > 0 && (
+        <div className="activeFilters">
+          {active.map((k) => (
+            <button
+              key={k}
+              className="chip on"
+              onClick={() => update({ [k]: null })}
+            >
+              {filterLabel(t, k, params.get(k)!)}{" "}
+              <X aria-label={t("ops.orders.remove")} />
+            </button>
+          ))}
+          <button
+            className="textBtn"
+            onClick={() => setParams(view === "all" ? {} : { view })}
+          >
+            {t("ops.orders.clear")}
+          </button>
+        </div>
+      )}
       {error && <Notice>{error}</Notice>}
       <section className="orders">
-        <OrderRows rows={rows} />
+        <OrderRows
+          rows={rows}
+          empty={active.length || q ? t("ops.orders.noMatch") : undefined}
+        />
         <Pagination
           page={page}
           pages={Math.max(1, Math.ceil(total / pageSize))}
           total={total}
           pageSize={pageSize}
-          onPage={setPage}
+          onPage={(p) => update({ page: String(p) })}
         />
       </section>
     </AppFrame>
   );
 }
 
-export function NewOrder() {
-  const { t } = useTranslation();
-  const nav = useNavigate();
-  const [services, setServices] = useState<ServiceData[]>([]);
-  const [qty, setQty] = useState<Record<string, number>>({});
-  const [error, setError] = useState("");
-  const [busy, setBusy] = useState(false);
-
-  useEffect(() => {
-    api<(ServiceData & { active: boolean })[]>("/api/v1/business/services", {
-      auth: "business",
-    }).then((s) => setServices(s.filter((x) => x.active)));
-  }, []);
-
-  const total = services.reduce(
-    (sum, s) => sum + Math.round((qty[s.id] ?? 0) * s.price),
-    0,
-  );
-  const step = (s: ServiceData) => (s.pricing_model === "PER_KG" ? 0.5 : 1);
-
-  async function submit(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    if (busy) return;
-    const fd = new FormData(e.currentTarget);
-    setBusy(true);
-    setError("");
-    try {
-      const order = await api<{ id: string }>("/api/v1/business/orders", {
-        auth: "business",
-        body: {
-          customer_name: fd.get("customer_name"),
-          phone: fd.get("phone"),
-          source: fd.get("source"),
-          payment_method: "CASH",
-          notes: fd.get("notes"),
-          items: Object.entries(qty)
-            .filter(([, n]) => n > 0)
-            .map(([service_id, quantity]) => ({ service_id, quantity })),
-        },
-      });
-      nav(`/app/orders/${order.id}`);
-    } catch (err) {
-      setError(errorMessage(err));
-    } finally {
-      setBusy(false);
-    }
+function filterLabel(t: TFunction, key: string, value: string) {
+  switch (key) {
+    case "status":
+      return value.split(",").map(statusLabel).join(", ");
+    case "source":
+      return t(`biz.source.${value}`);
+    case "due":
+      return t(`ops.dueFilter.${value}`);
+    case "payment":
+      return t(`ops.paymentFilter.${value}`);
+    case "date_from":
+      return `${t("ops.orders.from")} ${value}`;
+    case "date_to":
+      return `${t("ops.orders.to")} ${value}`;
+    default:
+      return t("ops.orders.oneCustomer");
   }
+}
 
-  return (
-    <AppFrame title={t("biz.newOrder")}>
-      <form className="workspaceForm" onSubmit={submit}>
-        <h2>{t("biz.col.customer")}</h2>
-        <div className="twoFields">
-          <label>
-            {t("checkout.name")}
-            <input name="customer_name" required minLength={2} />
-          </label>
-          <label>
-            {t("checkout.phone")}
-            <input
-              name="phone"
-              type="tel"
-              required
-              placeholder="+255 7xx xxx xxx"
-            />
-          </label>
-        </div>
-        <label>
-          {t("biz.col.source")}
-          <select name="source" defaultValue="WALK_IN">
-            {["WALK_IN", "PHONE", "WHATSAPP"].map((s) => (
-              <option key={s} value={s}>
-                {t(`biz.source.${s}`)}
-              </option>
-            ))}
-          </select>
-        </label>
-        <h2>{t("biz.nav.services")}</h2>
-        {services.map((s) => (
-          <div className="selectService" key={s.id}>
-            <span>
-              <b>{s.name}</b>
-              <small>
-                {money(s.price)}
-                {s.pricing_model === "PER_KG" && t("common.perKg")}
-              </small>
-            </span>
-            <div className="counter">
-              <button
-                type="button"
-                aria-label={t("store.remove", { name: s.name })}
-                onClick={() =>
-                  setQty({
-                    ...qty,
-                    [s.id]: Math.max(0, (qty[s.id] ?? 0) - step(s)),
-                  })
-                }
-              >
-                <Minus />
-              </button>
-              <b>{qty[s.id] ?? 0}</b>
-              <button
-                type="button"
-                aria-label={t("store.add", { name: s.name })}
-                onClick={() =>
-                  setQty({ ...qty, [s.id]: (qty[s.id] ?? 0) + step(s) })
-                }
-              >
-                <Plus />
-              </button>
-            </div>
-          </div>
-        ))}
-        <label>
-          {t("biz.notes")}
-          <textarea
-            name="notes"
-            maxLength={500}
-            placeholder={t("biz.notesHint")}
-          />
-        </label>
-        <div className="formTotal">
-          <span>{t("common.total")}</span>
-          <b>{money(total)}</b>
-        </div>
-        {error && <Notice>{error}</Notice>}
-        <button className="primary" disabled={busy || total === 0}>
-          {t("biz.createOrder")} <ArrowRight />
-        </button>
-      </form>
-    </AppFrame>
-  );
+export function localInput(d: Date) {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
 type BusinessOrder = OrderDetail & {
-  customer: { name: string; phone: string };
+  customer: {
+    id: string;
+    name: string;
+    phone: string | null;
+    is_guest: boolean;
+  };
+  amount_paid: number;
+  balance: number;
+  payments: {
+    method: string;
+    amount: number;
+    status: string;
+    reference: string | null;
+    paid_at: string;
+  }[];
+  can_collect: boolean;
   allowed_next: string[];
   source: string;
   notes: string;
+  discount: number;
+  due_at: string | null;
+  ready_at: string | null;
+  due_state: OrderRow["due_state"];
+  can_edit_due: boolean;
+  can_record_payment: boolean;
 };
 
 export function OrderDetailPage() {
   const { id = "" } = useParams();
   const { t } = useTranslation();
+  const can = useCan();
   const [order, setOrder] = useState<BusinessOrder | null>(null);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [editDue, setEditDue] = useState<string | null>(null);
+  const [payMethod, setPayMethod] = useState<"CASH" | "MOBILE_MONEY">("CASH");
+  const [payAmount, setPayAmount] = useState(0);
+  const [payRef, setPayRef] = useState("");
 
   const load = useCallback(() => {
     api<BusinessOrder>(`/api/v1/business/orders/${id}`, { auth: "business" })
@@ -366,8 +492,10 @@ export function OrderDetailPage() {
     try {
       await fn();
       load();
+      return true;
     } catch (err) {
       setError(errorMessage(err));
+      return false;
     } finally {
       setBusy(false);
     }
@@ -387,6 +515,30 @@ export function OrderDetailPage() {
     );
   }
 
+  const payment = () => ({
+    method: payMethod,
+    amount:
+      payAmount && order && payAmount < order.balance ? payAmount : undefined,
+    reference: payMethod === "MOBILE_MONEY" ? payRef.trim() : "",
+  });
+  const pay = () =>
+    run(() =>
+      api(`/api/v1/business/orders/${id}/payments`, {
+        auth: "business",
+        body: payment(),
+      }),
+    ).then((ok) => ok && (setPayAmount(0), setPayRef("")));
+  const collect = () =>
+    run(() =>
+      api(`/api/v1/business/orders/${id}/collect`, {
+        auth: "business",
+        body:
+          order && order.balance > 0
+            ? { payment: { ...payment(), amount: undefined } }
+            : {},
+      }),
+    );
+
   if (!order)
     return (
       <AppFrame title={t("biz.nav.orders")}>
@@ -405,6 +557,11 @@ export function OrderDetailPage() {
     (s) => s === "CANCELLED" || s === "REJECTED",
   );
   const reached = new Set(order.events.map((e) => e.status));
+  const unpaid =
+    order.payment_status !== "PAID" &&
+    order.payment_status !== "REFUNDED" &&
+    order.payment_status !== "PROCESSING" &&
+    !["CANCELLED", "REJECTED"].includes(order.status);
 
   return (
     <AppFrame title={t("biz.orderTitle", { number: order.order_number })}>
@@ -414,18 +571,25 @@ export function OrderDetailPage() {
           <div className="spread">
             <div>
               <p className="kicker">
-                {order.customer.name} · {t(`biz.source.${order.source}`)}
+                {can("customers.view") && !order.customer.is_guest ? (
+                  <Link to={`/app/customers/${order.customer.id}`}>
+                    {order.customer.name}
+                  </Link>
+                ) : (
+                  order.customer.name
+                )}{" "}
+                · {t(`biz.source.${order.source}`)}
               </p>
-              <h2>
-                {order.items
-                  .map(
-                    (i) =>
-                      `${i.quantity}${i.pricing_model === "PER_KG" ? " kg" : "×"} ${i.name}`,
-                  )
-                  .join(", ") || money(order.total)}
-              </h2>
+              <h2>{itemsSummary(order.items) || money(order.total)}</h2>
               <p className="muted">
-                {order.customer.phone} ·{" "}
+                {order.customer.phone && (
+                  <>
+                    <a href={`tel:${order.customer.phone}`}>
+                      {order.customer.phone}
+                    </a>{" "}
+                    ·{" "}
+                  </>
+                )}
                 {order.fulfillment === "PICKUP"
                   ? t("checkout.pickup")
                   : t("checkout.dropOff")}
@@ -439,6 +603,61 @@ export function OrderDetailPage() {
             </div>
             <StatusPill status={order.status} />
           </div>
+          <div className="dueLine">
+            <span>
+              {order.ready_at
+                ? t("ops.detail.readyAt", { time: dateTime(order.ready_at) })
+                : order.due_at
+                  ? t("ops.detail.promised", { time: dateTime(order.due_at) })
+                  : t("ops.detail.noPromise")}
+            </span>
+            <DueBadge o={order} />
+            {order.can_edit_due && editDue === null && (
+              <button
+                className="textBtn"
+                onClick={() =>
+                  setEditDue(
+                    order.due_at ? localInput(new Date(order.due_at)) : "",
+                  )
+                }
+              >
+                {t("ops.detail.changePromise")}
+              </button>
+            )}
+          </div>
+          {editDue !== null && (
+            <form
+              className="inlineForm"
+              onSubmit={(e) => {
+                e.preventDefault();
+                run(() =>
+                  api(`/api/v1/business/orders/${id}`, {
+                    auth: "business",
+                    method: "PATCH",
+                    body: { due_at: new Date(editDue).toISOString() },
+                  }),
+                ).then((ok) => ok && setEditDue(null));
+              }}
+            >
+              <input
+                type="datetime-local"
+                required
+                value={editDue}
+                onChange={(e) => setEditDue(e.target.value)}
+                aria-label={t("ops.newOrder.promised")}
+              />
+              <button className="outlineBtn" disabled={busy}>
+                {t("biz.save")}
+              </button>
+              <button
+                type="button"
+                className="textBtn"
+                onClick={() => setEditDue(null)}
+              >
+                {t("common.cancel")}
+              </button>
+            </form>
+          )}
           <div className="orderTimeline">
             {order.stages.map((s, i) => {
               const current = order.stages.indexOf(order.status);
@@ -501,6 +720,12 @@ export function OrderDetailPage() {
               <b>{money(order.delivery_fee)}</b>
             </p>
           )}
+          {order.discount > 0 && (
+            <p className="spread">
+              <span>{t("ops.newOrder.discount")}</span>
+              <b>−{money(order.discount)}</b>
+            </p>
+          )}
           <hr />
           <p className="spread">
             <b>{t("common.total")}</b>
@@ -515,26 +740,100 @@ export function OrderDetailPage() {
               · {t(`payment.${order.payment_status}`)}
             </b>
           </p>
-          {order.payment_status !== "PAID" &&
-            order.payment_status !== "REFUNDED" &&
-            order.payment_status !== "PROCESSING" &&
-            !["CANCELLED", "REJECTED"].includes(order.status) && (
-              <button
-                className="outlineBtn full"
-                disabled={busy}
-                onClick={() =>
-                  run(() =>
-                    api(`/api/v1/business/orders/${id}/payments/cash`, {
-                      auth: "business",
-                      method: "POST",
-                    }),
-                  )
-                }
+          {order.payments.map((p, n) => (
+            <p className="spread muted" key={n}>
+              <span>
+                {t("walkin.paid")} ·{" "}
+                {p.method === "CASH"
+                  ? t("checkout.cash")
+                  : t("ops.pay.mobileShort")}
+                {p.reference && ` · ${p.reference}`}
+              </span>
+              <span>{money(p.amount)}</span>
+            </p>
+          ))}
+          {order.balance > 0 && order.amount_paid > 0 && (
+            <p className="spread">
+              <b>{t("walkin.balanceDue")}</b>
+              <strong>{money(order.balance)}</strong>
+            </p>
+          )}
+          {unpaid && order.can_record_payment && (
+            <div className="payActions">
+              <div
+                className="segmented small"
+                role="group"
+                aria-label={t("checkout.payment")}
               >
-                <Banknote />{" "}
-                {t("biz.recordCash", { amount: money(order.total) })}
-              </button>
-            )}
+                {(["CASH", "MOBILE_MONEY"] as const).map((m) => (
+                  <button
+                    key={m}
+                    className={payMethod === m ? "on" : ""}
+                    aria-pressed={payMethod === m}
+                    onClick={() => setPayMethod(m)}
+                  >
+                    {m === "CASH"
+                      ? t("checkout.cash")
+                      : t("ops.pay.mobileShort")}
+                  </button>
+                ))}
+              </div>
+              <label>
+                {t("walkin.amountNow")}
+                <input
+                  type="number"
+                  min={100}
+                  max={order.balance}
+                  step={100}
+                  placeholder={String(order.balance)}
+                  value={payAmount || ""}
+                  onChange={(e) =>
+                    setPayAmount(Math.max(0, Number(e.target.value) || 0))
+                  }
+                />
+              </label>
+              {payMethod === "MOBILE_MONEY" && (
+                <input
+                  value={payRef}
+                  onChange={(e) => setPayRef(e.target.value)}
+                  placeholder={t("ops.pay.reference")}
+                  aria-label={t("ops.pay.reference")}
+                  maxLength={60}
+                />
+              )}
+              {!order.can_collect && (
+                <button
+                  className="outlineBtn full"
+                  disabled={busy}
+                  onClick={pay}
+                >
+                  {payMethod === "CASH" ? (
+                    <Banknote aria-hidden />
+                  ) : (
+                    <Smartphone aria-hidden />
+                  )}{" "}
+                  {t("ops.pay.confirm", {
+                    amount: money(
+                      payAmount && payAmount < order.balance
+                        ? payAmount
+                        : order.balance,
+                    ),
+                  })}
+                </button>
+              )}
+            </div>
+          )}
+          {order.can_collect && (
+            <button className="primary full" disabled={busy} onClick={collect}>
+              <PackageCheck aria-hidden />{" "}
+              {order.balance > 0
+                ? t("walkin.collectAndPay", { amount: money(order.balance) })
+                : t("walkin.collected")}
+            </button>
+          )}
+          <Link className="textLink" to={`/app/orders/${order.id}/slip`}>
+            <Printer aria-hidden /> {t("walkin.printSlip")}
+          </Link>
         </aside>
       </div>
     </AppFrame>

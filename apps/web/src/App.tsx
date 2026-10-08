@@ -50,7 +50,9 @@ const AdminLogin = lazy(() => auth().then((m) => ({ default: m.AdminLogin })));
 const Onboarding = lazy(() => import("./business/Onboarding"));
 const Dashboard = lazy(() => import("./business/Dashboard"));
 const Orders = lazy(() => orders().then((m) => ({ default: m.Orders })));
-const NewOrder = lazy(() => orders().then((m) => ({ default: m.NewOrder })));
+const walkIn = () => import("./business/WalkIn");
+const NewOrder = lazy(() => walkIn().then((m) => ({ default: m.NewOrder })));
+const OrderSlip = lazy(() => walkIn().then((m) => ({ default: m.OrderSlip })));
 const OrderDetailPage = lazy(() =>
   orders().then((m) => ({ default: m.OrderDetailPage })),
 );
@@ -61,6 +63,16 @@ const Customers = lazy(() =>
   customers().then((m) => ({ default: m.Customers })),
 );
 const Payments = lazy(() => customers().then((m) => ({ default: m.Payments })));
+const CustomerProfile = lazy(() =>
+  customers().then((m) => ({ default: m.CustomerProfile })),
+);
+const reports = () => import("./business/Reports");
+const ReportsIndex = lazy(() =>
+  reports().then((m) => ({ default: m.ReportsIndex })),
+);
+const ReportPage = lazy(() =>
+  reports().then((m) => ({ default: m.ReportPage })),
+);
 const Admin = lazy(() => import("./admin/Admin"));
 
 function Logo() {
@@ -407,9 +419,13 @@ export default function App() {
         <Route path="/app/orders" element={<Orders />} />
         <Route path="/app/orders/new" element={<NewOrder />} />
         <Route path="/app/orders/:id" element={<OrderDetailPage />} />
+        <Route path="/app/orders/:id/slip" element={<OrderSlip />} />
         <Route path="/app/services" element={<Services />} />
         <Route path="/app/marketplace" element={<MarketplaceBusiness />} />
         <Route path="/app/customers" element={<Customers />} />
+        <Route path="/app/customers/:id" element={<CustomerProfile />} />
+        <Route path="/app/reports" element={<ReportsIndex />} />
+        <Route path="/app/reports/:kind" element={<ReportPage />} />
         <Route path="/app/payments" element={<Payments />} />
         <Route path="/app/settings" element={<Settings />} />
         <Route path="/admin/login" element={<AdminLogin />} />

@@ -50,7 +50,8 @@
     "continue": "Continue",
     "wait": "Please wait…",
     "loading": "Loading…",
-    "close": "Close"
+    "close": "Close",
+    "cancel": "Cancel"
   },
   "market": {
     "title": "Find a laundry",
@@ -104,7 +105,15 @@
     "hours": "Opening hours",
     "replaceCart": "Your cart has items from {{name}}. Start a new cart here instead?"
   },
-  "days": { "mon": "Monday", "tue": "Tuesday", "wed": "Wednesday", "thu": "Thursday", "fri": "Friday", "sat": "Saturday", "sun": "Sunday" },
+  "days": {
+    "mon": "Monday",
+    "tue": "Tuesday",
+    "wed": "Wednesday",
+    "thu": "Thursday",
+    "fri": "Friday",
+    "sat": "Saturday",
+    "sun": "Sunday"
+  },
   "cart": {
     "summary_one": "{{count}} item",
     "summary_other": "{{count}} items",
@@ -145,7 +154,13 @@
       "payment": "How will you pay?",
       "review": "Check and place your order"
     },
-    "stepShort": { "fulfilment": "Pickup", "address": "Address", "schedule": "Time", "payment": "Payment", "review": "Review" },
+    "stepShort": {
+      "fulfilment": "Pickup",
+      "address": "Address",
+      "schedule": "Time",
+      "payment": "Payment",
+      "review": "Review"
+    },
     "pickup": "Pickup",
     "pickupBody": "A rider collects from your door and brings it back.",
     "pickupUnavailable": "This laundry doesn't offer pickup.",
@@ -209,8 +224,19 @@
     "yourReview": "Your review",
     "reorderNothing": "None of these services are available any more."
   },
-  "orders": { "title": "My orders", "track": "Track order", "reorder": "Order again" },
-  "payment": { "PENDING": "Not paid yet", "PROCESSING": "Processing", "PAID": "Paid", "FAILED": "Payment failed", "REFUNDED": "Refunded" },
+  "orders": {
+    "title": "My orders",
+    "track": "Track order",
+    "reorder": "Order again"
+  },
+  "payment": {
+    "PENDING": "Not paid yet",
+    "PROCESSING": "Processing",
+    "PAID": "Paid",
+    "FAILED": "Payment failed",
+    "REFUNDED": "Refunded",
+    "PARTIAL": "Part paid"
+  },
   "status": {
     "NEW": "Placed",
     "ACCEPTED": "Accepted",
@@ -274,7 +300,10 @@
     "REASON_REQUIRED": "Please give a reason.",
     "APPLICATION_EXISTS": "You've already applied."
   },
-  "footer": { "tagline": "Clean clothes, less hassle. Karibu Launder.", "rights": "Made in Tanzania." },
+  "footer": {
+    "tagline": "Clean clothes, less hassle. Karibu Launder.",
+    "rights": "Made in Tanzania."
+  },
   "biz": {
     "showing": "Showing {{from}}–{{to}} of {{total}}",
     "previous": "Previous",
@@ -282,14 +311,34 @@
     "workspace": "Workspace",
     "menu": "Menu",
     "signOut": "Sign out",
-    "nav": { "dashboard": "Dashboard", "orders": "Orders", "customers": "Customers", "services": "Services & prices", "payments": "Payments", "marketplace": "Marketplace", "settings": "Settings" },
+    "nav": {
+      "dashboard": "Dashboard",
+      "orders": "Orders",
+      "customers": "Customers",
+      "services": "Services & prices",
+      "payments": "Payments",
+      "marketplace": "Marketplace",
+      "settings": "Settings",
+      "reports": "Reports"
+    },
     "morning": "Good morning",
     "afternoon": "Good afternoon",
     "evening": "Good evening",
-    "metrics": { "newOrders": "New orders", "todayOrders": "Orders today", "todayRevenue": "Paid today", "ready": "Ready for collection", "outstanding": "Unpaid" },
+    "metrics": {
+      "newOrders": "New orders",
+      "todayOrders": "Orders today",
+      "todayRevenue": "Paid today",
+      "ready": "Ready for collection",
+      "outstanding": "Unpaid"
+    },
     "orderMix": "Order mix",
     "whereFrom": "Where orders come from",
-    "source": { "MARKETPLACE": "Marketplace", "WALK_IN": "Walk-in", "PHONE": "Phone", "WHATSAPP": "WhatsApp" },
+    "source": {
+      "MARKETPLACE": "Marketplace",
+      "WALK_IN": "Walk-in",
+      "PHONE": "Phone",
+      "WHATSAPP": "WhatsApp"
+    },
     "paidRevenue": "Paid revenue",
     "avgOrder": "Average order",
     "commission": "Marketplace commission",
@@ -300,9 +349,22 @@
     "recentOrders": "Recent orders",
     "viewAll": "View all",
     "noOrders": "No orders yet.",
-    "col": { "order": "Order", "customer": "Customer", "source": "Source", "status": "Status", "total": "Total" },
+    "col": {
+      "order": "Order",
+      "customer": "Customer",
+      "source": "Source",
+      "status": "Status",
+      "total": "Total"
+    },
     "searchOrders": "Search order number, name or phone",
-    "filters": { "0": "All orders", "1": "New", "2": "In progress", "3": "Ready / on the way", "4": "Delivered / completed", "5": "Cancelled / declined" },
+    "filters": {
+      "0": "All orders",
+      "1": "New",
+      "2": "In progress",
+      "3": "Ready / on the way",
+      "4": "Delivered / completed",
+      "5": "Cancelled / declined"
+    },
     "exportCsv": "Export CSV",
     "notes": "Notes",
     "notesHint": "Stains, fabric care, anything the team should know",
@@ -334,19 +396,38 @@
     "opens": "Opens",
     "closes": "Closes",
     "staff": "Team",
-    "role": { "BUSINESS_OWNER": "Owner", "BRANCH_MANAGER": "Manager", "STAFF": "Staff" },
+    "role": {
+      "BUSINESS_OWNER": "Owner",
+      "BRANCH_MANAGER": "Manager",
+      "STAFF": "Staff",
+      "CASHIER": "Cashier",
+      "DRIVER": "Driver"
+    },
     "roleLabel": "Role",
     "tempPassword": "Temporary password",
     "addStaff": "Add team member",
     "profileAndLocation": "Business profile & location",
     "searchCustomers": "Search name or phone",
     "usesApp": "Launder app",
-    "paymentsIntro": "Finished orders that haven't been paid yet. Open an order to record a cash payment."
+    "paymentsIntro": "Finished orders that haven't been paid yet. Open an order to record a cash payment.",
+    "perPackage": "Per package"
   },
   "bizAuth": {
-    "login": { "title": "Welcome back.", "body": "Sign in to your laundry's workspace.", "submit": "Sign in" },
-    "register": { "title": "Run your laundry with Launder.", "body": "Free to start. Join the marketplace only when you're ready.", "submit": "Create business account" },
-    "admin": { "title": "Platform administration", "body": "Authorised Launder staff only.", "submit": "Sign in" },
+    "login": {
+      "title": "Welcome back.",
+      "body": "Sign in to your laundry's workspace.",
+      "submit": "Sign in"
+    },
+    "register": {
+      "title": "Run your laundry with Launder.",
+      "body": "Free to start. Join the marketplace only when you're ready.",
+      "submit": "Create business account"
+    },
+    "admin": {
+      "title": "Platform administration",
+      "body": "Authorised Launder staff only.",
+      "submit": "Sign in"
+    },
     "fullName": "Your full name",
     "businessName": "Business name",
     "email": "Email",
@@ -358,7 +439,13 @@
     "promiseBody": "Using Launder Business never lists you publicly. Marketplace is a separate, optional application."
   },
   "mp": {
-    "status": { "NOT_ENROLLED": "Not listed", "PENDING_REVIEW": "Under review", "ACTIVE": "Live", "REJECTED": "Not approved", "SUSPENDED": "Paused" },
+    "status": {
+      "NOT_ENROLLED": "Not listed",
+      "PENDING_REVIEW": "Under review",
+      "ACTIVE": "Live",
+      "REJECTED": "Not approved",
+      "SUSPENDED": "Paused"
+    },
     "headline": {
       "NOT_ENROLLED": "Get found by customers nearby",
       "PENDING_REVIEW": "Your application is being reviewed",
@@ -377,7 +464,12 @@
     "submittedOn": "Submitted {{date}}",
     "refresh": "Refresh status",
     "checklist": "Before you apply",
-    "check": { "profile": "Business name, phone and description", "location": "Area, address and map location", "services": "At least one active service", "hours": "Opening hours" },
+    "check": {
+      "profile": "Business name, phone and description",
+      "location": "Area, address and map location",
+      "services": "At least one active service",
+      "hours": "Opening hours"
+    },
     "fix": "Complete",
     "apply": "Apply to the marketplace",
     "contact": "Contact person",
@@ -389,10 +481,20 @@
   },
   "onb": {
     "setup": "Business setup",
-    "steps": { "profile": "Profile & location", "hours": "Opening hours", "services": "Services & prices", "done": "Ready" },
+    "steps": {
+      "profile": "Profile & location",
+      "hours": "Opening hours",
+      "services": "Services & prices",
+      "done": "Ready"
+    },
     "stepOf": "Step {{step}} of {{total}}",
     "later": "Finish later",
-    "titles": { "profile": "Tell customers who you are", "hours": "When are you open?", "services": "What do you charge?", "done": "You're set up" },
+    "titles": {
+      "profile": "Tell customers who you are",
+      "hours": "When are you open?",
+      "services": "What do you charge?",
+      "done": "You're set up"
+    },
     "intros": {
       "profile": "Your name, phone and location. You can change these any time.",
       "hours": "Pickup times are built from these hours.",
@@ -408,7 +510,16 @@
   },
   "admin": {
     "title": "Platform administration",
-    "tabs": { "dashboard": "Overview", "applications": "Marketplace applications", "businesses": "Businesses", "orders": "Orders", "customers": "Customers", "payments": "Payments", "reviews": "Reviews", "audit": "Audit trail" },
+    "tabs": {
+      "dashboard": "Overview",
+      "applications": "Marketplace applications",
+      "businesses": "Businesses",
+      "orders": "Orders",
+      "customers": "Customers",
+      "payments": "Payments",
+      "reviews": "Reviews",
+      "audit": "Audit trail"
+    },
     "stats": {
       "businesses": "Businesses",
       "marketplace_active": "Live on marketplace",
@@ -420,7 +531,12 @@
       "platform_revenue": "Commission earned"
     },
     "reasonPrompt": "Reason (recorded in the audit trail and shown to the business):",
-    "decided": { "approve": "{{name}} is now live.", "reject": "{{name}} was not approved.", "suspend": "{{name}} is paused.", "reinstate": "{{name}} is live again." },
+    "decided": {
+      "approve": "{{name}} is now live.",
+      "reject": "{{name}} was not approved.",
+      "suspend": "{{name}} is paused.",
+      "reinstate": "{{name}} is live again."
+    },
     "review": "Review",
     "approve": "Approve",
     "reject": "Reject",
@@ -434,5 +550,457 @@
     "hide": "Hide",
     "publish": "Publish",
     "system": "System"
+  },
+  "ops": {
+    "dash": {
+      "greeting": "{{greeting}}, {{name}}",
+      "today": "Today",
+      "ordersToday": "Orders today",
+      "salesToday": "Sales today",
+      "ready": "Ready for collection",
+      "outstanding": "Outstanding payments",
+      "processing": "Being processed",
+      "dueToday": "Due today",
+      "pickups": "Pickups to collect",
+      "deliveries": "Deliveries to make",
+      "processingSub": "{{count}} being processed",
+      "collectedSub": "{{amount}} collected today",
+      "readyUnpaidSub_one": "{{count}} not paid yet",
+      "readyUnpaidSub_other": "{{count}} not paid yet",
+      "ordersCount_one": "{{count}} order",
+      "ordersCount_other": "{{count}} orders",
+      "overdueSub_one": "plus {{count}} overdue",
+      "overdueSub_other": "plus {{count}} overdue",
+      "attention": "Needs attention",
+      "attentionQ": "Work and money to deal with now",
+      "allClear": "Nothing needs your attention right now.",
+      "allClearSub": "Late orders, payments, pickups and uncollected clothes will appear here.",
+      "allClearNew": "Once orders come in, anything late or unpaid will appear here.",
+      "operations": "Today's operations",
+      "operationsQ_one": "{{count}} open order, by stage",
+      "operationsQ_other": "{{count}} open orders, by stage",
+      "performance": "Business performance",
+      "performanceQ": "Are we growing? This month so far, compared with the same days last month.",
+      "openMonthly": "Monthly report",
+      "trend": "Trend",
+      "trend_sales": "Sales by day, last 30 days",
+      "trend_orders": "Orders by day, last 30 days",
+      "trendNote": "Today is shown lighter because the day is not over.",
+      "insights": "What the numbers say",
+      "insightsNote": "Calculated from your own orders. Shown only when there is enough data.",
+      "marketplace": "Marketplace",
+      "marketplaceQ": "Is Launder Marketplace bringing in business? This month so far.",
+      "customers": "Customers",
+      "customersQ": "Are customers coming back? This month so far.",
+      "details": "Details",
+      "notSeen": "Not seen recently"
+    },
+    "quick": {
+      "newOrder": "New walk-in order",
+      "addCustomer": "Add customer",
+      "receivePayment": "Receive payment",
+      "readyOrders": "Ready orders",
+      "deliveries": "My deliveries"
+    },
+    "first": {
+      "kicker": "Welcome to Launder",
+      "title": "Let's get your business ready",
+      "text": "A few steps and you can take your first order. Everything you set up here is saved as you go.",
+      "progress": "{{done}} of {{total}} done",
+      "steps": {
+        "business": "Business created",
+        "location": "Add your address and map location",
+        "services": "Add your services and prices",
+        "hours": "Set your opening hours",
+        "first_order": "Create your first order",
+        "staff": "Invite your team",
+        "marketplace": "Join Launder Marketplace (optional)"
+      }
+    },
+    "attention": {
+      "overdue_one": "{{count}} order is overdue",
+      "overdue_other": "{{count}} orders are overdue",
+      "marketplace_new_one": "{{count}} Marketplace order needs accepting",
+      "marketplace_new_other": "{{count}} Marketplace orders need accepting",
+      "payments_stuck_one": "{{count}} mobile money payment waiting over {{minutes}} min",
+      "payments_stuck_other": "{{count}} mobile money payments waiting over {{minutes}} min",
+      "due_today_one": "{{count}} order due later today",
+      "due_today_other": "{{count}} orders due later today",
+      "dueSoon_one": "{{count}} within the next {{hours}} hours",
+      "dueSoon_other": "{{count}} within the next {{hours}} hours",
+      "pickups_today_one": "{{count}} pickup to collect today",
+      "pickups_today_other": "{{count}} pickups to collect today",
+      "deliveries_one": "{{count}} delivery to make",
+      "deliveries_other": "{{count}} deliveries to make",
+      "outstanding_one": "{{amount}} unpaid on {{count}} order",
+      "outstanding_other": "{{amount}} unpaid on {{count}} orders",
+      "uncollected_one": "{{count}} ready order not collected after {{hours}} hours",
+      "uncollected_other": "{{count}} ready orders not collected after {{hours}} hours",
+      "cta": {
+        "overdue": "View orders",
+        "marketplace_new": "Review",
+        "payments_stuck": "Check",
+        "due_today": "View",
+        "pickups_today": "Plan pickups",
+        "deliveries": "View",
+        "outstanding": "View payments",
+        "uncollected": "Call customers"
+      }
+    },
+    "compare": {
+      "previous_day_same_weekday": "vs same day last week",
+      "previous_day_same_weekday_partial": "vs same time last week",
+      "previous_week": "vs last week",
+      "previous_week_partial": "vs same point last week",
+      "previous_month": "vs last month",
+      "previous_month_partial": "vs same days last month",
+      "previous_period": "vs previous period",
+      "previous_period_partial": "vs previous period",
+      "same": "About the same",
+      "notEnough": "Not enough history to compare yet",
+      "notEnoughLong": "Comparisons are hidden because the previous period had fewer than 5 orders."
+    },
+    "metric": {
+      "salesMtd": "Sales this month",
+      "orders": "Orders",
+      "averageOrder": "Average order",
+      "collected": "Collected",
+      "fromPrevious": "from {{amount}}"
+    },
+    "insight": {
+      "busiest_day": "{{weekday}} is your busiest day — {{average}} orders on average over the last 8 weeks.",
+      "top_service": "{{name}} brought in {{share}} of service revenue this month.",
+      "marketplace_share": "{{share}} of this month's orders came through Launder Marketplace.",
+      "aov_up": "Your average order is up {{change}} this month ({{value}}, from {{previous}}).",
+      "aov_down": "Your average order is down {{change}} this month ({{value}}, from {{previous}}).",
+      "repeat_customers_one": "{{count}} customer ordered more than once this month.",
+      "repeat_customers_other": "{{count}} customers ordered more than once this month.",
+      "late_orders_one": "{{count}} order was ready later than promised this month.",
+      "late_orders_other": "{{count}} orders were ready later than promised this month."
+    },
+    "mp": {
+      "orders": "Marketplace orders",
+      "sales": "Marketplace sales",
+      "commission": "Commission ({{rate}}%)",
+      "share": "Share of business",
+      "ofOrders": "of orders",
+      "ofSales": "of sales",
+      "average": "Average Marketplace order",
+      "customers": "Marketplace customers",
+      "newCustomers_one": "{{count}} new to you",
+      "newCustomers_other": "{{count}} new to you",
+      "rating": "Marketplace rating",
+      "gmv": "Marketplace sales (customers paid)",
+      "commissionAccrued": "Launder commission, completed orders ({{rate}}%)",
+      "accruedHint": "Charged when an order is completed",
+      "commissionPending": "Commission still to come",
+      "pendingHint": "Estimated on Marketplace orders not yet completed",
+      "net": "Your net from Marketplace",
+      "how": "Commission is {{rate}}% of the laundry services on Marketplace orders. Pickup fees and walk-in, phone and WhatsApp orders are never charged.",
+      "notEnrolled": "You are not on Launder Marketplace."
+    },
+    "cust": {
+      "unique": "Customers served",
+      "new": "New customers",
+      "returning": "Returning customers",
+      "repeatRate": "Repeat rate",
+      "multi": "Ordered more than once",
+      "fromMarketplace": "New via Marketplace",
+      "multiOrder_one": "{{count}} customer ordered more than once.",
+      "multiOrder_other": "{{count}} customers ordered more than once.",
+      "definitions": "New = first order with you in this period. Returning = ordered before. Repeat rate = returning ÷ all customers served.",
+      "top": "Top customers",
+      "topQ": "Who spends the most with you in this period?",
+      "add": "Add customer",
+      "save": "Save customer",
+      "notes": "Notes",
+      "notesHint": "e.g. no starch, prefers WhatsApp",
+      "noNotes": "No notes yet.",
+      "segments": "Customer groups",
+      "sort": "Sort",
+      "sortBy": {
+        "recent": "Most recent",
+        "spend": "Highest spend",
+        "orders": "Most orders",
+        "name": "Name"
+      },
+      "orders": "Orders",
+      "spend": "Spend",
+      "lastOrder": "Last order",
+      "lifetime": "Total spend",
+      "average": "{{amount}} average order",
+      "outstanding": "Owes",
+      "owes": "owes {{amount}}",
+      "since": "since {{date}}",
+      "daysAgo_one": "{{count}} day ago",
+      "daysAgo_other": "{{count}} days ago",
+      "none": "No customers match.",
+      "inactiveHint": "Customers whose last order was more than 45 days ago — worth a friendly call or WhatsApp.",
+      "newOrderFor": "New order",
+      "call": "Call",
+      "recentOrders": "Recent orders",
+      "preferred": "Usually orders",
+      "inOrders_one": "in {{count}} order",
+      "inOrders_other": "in {{count}} orders",
+      "noServices": "No orders yet."
+    },
+    "segment": {
+      "all": "All",
+      "new": "New",
+      "returning": "Returning",
+      "frequent": "Frequent",
+      "inactive": "Not seen in 45 days",
+      "outstanding": "Owes money"
+    },
+    "view": {
+      "all": "All",
+      "new": "New",
+      "in_progress": "In progress",
+      "ready": "Ready",
+      "delivery": "Pickup & delivery",
+      "completed": "Completed",
+      "cancelled": "Cancelled"
+    },
+    "dueFilter": {
+      "overdue": "Overdue",
+      "today": "Due today",
+      "uncollected": "Not collected"
+    },
+    "paymentFilter": {
+      "outstanding": "Owed (accepted, unpaid)",
+      "unpaid": "Not paid",
+      "paid": "Paid",
+      "processing": "Mobile money processing"
+    },
+    "orders": {
+      "views": "Order views",
+      "urgency": "Urgent work",
+      "from": "From",
+      "to": "To",
+      "anySource": "Any source",
+      "anyPayment": "Any payment",
+      "clear": "Clear filters",
+      "remove": "Remove filter",
+      "noMatch": "No orders match these filters.",
+      "oneCustomer": "One customer"
+    },
+    "col": {
+      "items": "Items",
+      "due": "Due"
+    },
+    "due": {
+      "lateHours_one": "{{count}} h late",
+      "lateHours_other": "{{count}} h late",
+      "lateDays_one": "{{count}} day late",
+      "lateDays_other": "{{count}} days late",
+      "at": "Due {{time}}",
+      "on": "Due {{date}}",
+      "readyDays_one": "Ready {{count}} day",
+      "readyDays_other": "Ready {{count}} days"
+    },
+    "detail": {
+      "promised": "Promised for {{time}}",
+      "readyAt": "Ready since {{time}}",
+      "noPromise": "No promised time",
+      "changePromise": "Change"
+    },
+    "newOrder": {
+      "known_one": "Returning customer · {{count}} order before",
+      "known_other": "Returning customer · {{count}} orders before",
+      "hours_one": "{{count}} h",
+      "hours_other": "{{count}} h",
+      "promised": "Promised ready time",
+      "promisedHint": "Set from the slowest service. Change it if you promise the customer another time.",
+      "discount": "Discount (TZS)",
+      "afterDiscount": "after {{amount}} discount",
+      "paidNow": "Payment"
+    },
+    "pay": {
+      "later": "Pays on collection",
+      "CASH": "Paid cash now",
+      "MOBILE_MONEY": "Paid mobile money now",
+      "reference": "Transaction reference (e.g. M-Pesa code)",
+      "noReference": "Record this mobile money payment without a reference?",
+      "recordMobile": "Record mobile money payment",
+      "confirm": "Record {{amount}}",
+      "mobileShort": "Mobile money",
+      "intro": "What you sold, what you collected and who still owes you — kept separate so the numbers always add up.",
+      "owed_one": "Owed to you ({{count}} order)",
+      "owed_other": "Owed to you ({{count}} orders)",
+      "owedHint": "Accepted orders that have not been paid. Record the payment when the customer pays.",
+      "nothingOwed": "Nobody owes you money right now.",
+      "received": "Payments received",
+      "noneReceived": "No payments in this period.",
+      "mix": "How customers paid",
+      "mixQ": "Money collected in this period, by payment method.",
+      "payments_one": "{{count}} payment",
+      "payments_other": "{{count}} payments",
+      "ofTotal": "of {{amount}}"
+    },
+    "money": {
+      "title": "Money",
+      "q": "Sales, collections and what is still owed are different numbers.",
+      "sales": "Sales",
+      "salesHint": "Value of orders taken in this period",
+      "discounts": "Discounts given",
+      "collected": "Collected",
+      "collectedHint": "Money received in this period, for any order",
+      "refunded": "Refunded",
+      "unpaidFromPeriod": "Unpaid from these orders",
+      "outstanding": "Outstanding now",
+      "outstandingHint": "All accepted orders not yet paid"
+    },
+    "book": {
+      "title": "Orders",
+      "q": "What came in, what went out, what carries over.",
+      "opening": "Open at start",
+      "new": "New orders",
+      "completed": "Completed",
+      "cancelled": "Cancelled or declined",
+      "carried_forward": "Carried forward"
+    },
+    "src": {
+      "title": "Where orders came from",
+      "q": "Which channels bring you work?"
+    },
+    "ops": {
+      "title": "Operations",
+      "q": "How the work moved, and whether promises were kept.",
+      "received": "Received",
+      "washing": "Washed",
+      "ironing": "Ironed",
+      "ready": "Ready",
+      "delivered": "Delivered",
+      "completed": "Completed",
+      "onTime": "Ready on time",
+      "onTimeOf": "{{late}} late of {{total}}",
+      "turnaround": "Average time to ready",
+      "hours_one": "{{count}} hour",
+      "hours_other": "{{count}} hours",
+      "overdueNow": "Overdue right now",
+      "cancellation": "Cancellation rate"
+    },
+    "svc": {
+      "title": "Services",
+      "q": "What do customers buy, and which services make the money?",
+      "byRevenue": "By revenue",
+      "byOrders": "By number of orders",
+      "orders_one": "{{count}} order",
+      "orders_other": "{{count}} orders",
+      "note": "Service revenue is before discounts and pickup fees."
+    },
+    "daily": {
+      "title": "Day by day",
+      "q": "Which days were strong and which were quiet?",
+      "table": "Show figures by day",
+      "date": "Day"
+    },
+    "week": {
+      "title": "Busiest days",
+      "q": "Average orders per weekday over the last {{weeks}} weeks — use it to plan staff.",
+      "avg_one": "{{count}} order on average",
+      "avg_other": "{{count}} orders on average"
+    },
+    "close": {
+      "title": "Close the day",
+      "q": "Check what should be in the till before you lock up.",
+      "expectedCash": "Cash expected",
+      "expectedMobile": "Mobile money received",
+      "expectedTotal": "Total collected today",
+      "countedLabel": "Cash counted (TZS)",
+      "note": "Note (optional)",
+      "submit": "Close day",
+      "noLock": "Closing records the totals and the cash you counted. Nothing is locked — later payments still record normally.",
+      "closedBy": "Closed by {{name}} at {{time}}",
+      "counted": "Cash counted {{amount}}",
+      "balanced": "Cash matches",
+      "variance": "Difference {{amount}}"
+    },
+    "period": {
+      "label": "Period",
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "last_7_days": "Last 7 days",
+      "this_week": "This week",
+      "last_week": "Last week",
+      "this_month": "This month",
+      "last_month": "Last month",
+      "custom": "Custom dates",
+      "from": "From",
+      "to": "To"
+    },
+    "reports": {
+      "intro": "Reports a laundry actually uses: close the day, check the week, understand the month. Print, save as PDF or download CSV.",
+      "kind": {
+        "daily": "End of day report",
+        "weekly": "Weekly performance",
+        "monthly": "Monthly business report",
+        "sales": "Sales report",
+        "orders": "Orders report",
+        "customers": "Customers report",
+        "marketplace": "Marketplace report",
+        "payments": "Payments report"
+      },
+      "about": {
+        "daily": "What happened today, what was collected, and close the day.",
+        "weekly": "This week against last week.",
+        "monthly": "The whole month: sales, customers, services, Marketplace, operations.",
+        "sales": "Sales by day and by service.",
+        "orders": "Order flow, sources and on-time performance.",
+        "customers": "New, returning and top customers.",
+        "marketplace": "Marketplace orders, commission and your net.",
+        "payments": "Collections by method and money owed."
+      },
+      "print": "Print / PDF",
+      "laundry": "Laundry",
+      "branch": "Branch",
+      "generated": "Generated",
+      "inProgress": "This period is still in progress; comparisons use the same point of the previous period."
+    },
+    "roleAbout": {
+      "STAFF": "Laundry staff see the work queue, items, stages and due times. No money figures.",
+      "CASHIER": "Cashiers create orders, find customers, take payments and hand over ready orders.",
+      "DRIVER": "Drivers see pickup and delivery orders only, and can record cash collected on delivery.",
+      "BRANCH_MANAGER": "Managers run the day: orders, payments, services, team and the daily and weekly reports."
+    }
+  },
+  "walkin": {
+    "title": "New walk-in order",
+    "kicker": "Counter",
+    "customer": "Customer (optional)",
+    "searchPlaceholder": "Search phone or name — or leave blank for a walk-in guest",
+    "matches": "Matching customers",
+    "changeCustomer": "Change customer",
+    "newCustomerName": "New customer's name",
+    "willSave": "A new customer will be saved with this phone number.",
+    "guestNamed": "No match — the order will be under “{{name}}” as a walk-in guest. Type a phone number to save a customer.",
+    "guest": "No details needed: the order goes under “Walk-in customer”.",
+    "unit": {
+      "PER_ITEM": " /item",
+      "PER_KG": " /kg",
+      "PACKAGE": " /package"
+    },
+    "kgFor": "Kilograms of {{name}}",
+    "editServices": "Edit services and prices",
+    "readyBy": "Ready by",
+    "pay": {
+      "later": "Pay on collection",
+      "full": "Paid in full",
+      "part": "Part paid"
+    },
+    "amountNow": "Amount received now (TZS)",
+    "balanceAfter": "Balance {{amount}} on collection",
+    "createPrint": "Create & print slip",
+    "slip": "Order slip",
+    "backToOrder": "Back to order",
+    "orderNo": "Order number",
+    "date": "Date",
+    "paid": "Paid",
+    "balanceDue": "Balance due",
+    "fullyPaid": "Fully paid",
+    "slipFooter": "Please bring this slip when you collect your clothes. Asante!",
+    "collected": "Customer collected",
+    "collectAndPay": "Take {{amount}} & hand over",
+    "printSlip": "Print order slip"
   }
 }

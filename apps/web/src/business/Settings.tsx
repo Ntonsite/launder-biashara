@@ -261,6 +261,8 @@ export function HoursForm({
   );
 }
 
+const ROLES = ["STAFF", "CASHIER", "DRIVER", "BRANCH_MANAGER"] as const;
+
 function Staff() {
   const { t } = useTranslation();
   const session = useSession("business");
@@ -268,6 +270,7 @@ function Staff() {
     { id: string; name: string; email: string; role: string; active: boolean }[]
   >([]);
   const s = useSaver();
+  const [role, setRole] = useState<string>("STAFF");
   const load = () =>
     api<{ items: typeof items }>("/api/v1/business/staff", {
       auth: "business",
@@ -334,13 +337,20 @@ function Staff() {
               aria-label={t("biz.tempPassword")}
               autoComplete="new-password"
             />
-            <select name="role" aria-label={t("biz.roleLabel")}>
-              <option value="STAFF">{t("biz.role.STAFF")}</option>
-              <option value="BRANCH_MANAGER">
-                {t("biz.role.BRANCH_MANAGER")}
-              </option>
+            <select
+              name="role"
+              aria-label={t("biz.roleLabel")}
+              value={role}
+              onChange={(e) => setRole(e.target.value)}
+            >
+              {ROLES.map((r) => (
+                <option key={r} value={r}>
+                  {t(`biz.role.${r}`)}
+                </option>
+              ))}
             </select>
           </div>
+          <p className="muted small">{t(`ops.roleAbout.${role}`)}</p>
           {s.error && <Notice>{s.error}</Notice>}
           <button className="outlineBtn" disabled={s.busy}>
             {t("biz.addStaff")}

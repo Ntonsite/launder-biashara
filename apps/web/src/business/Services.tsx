@@ -11,7 +11,7 @@ type Service = {
   name: string;
   description: string;
   category: string;
-  pricing_model: "PER_ITEM" | "PER_KG";
+  pricing_model: "PER_ITEM" | "PER_KG" | "PACKAGE";
   price: number;
   turnaround_hours: number;
   sort_order: number;
@@ -132,6 +132,7 @@ export default function Services() {
               <select name="model" defaultValue={editing.pricing_model}>
                 <option value="PER_ITEM">{t("biz.perItem")}</option>
                 <option value="PER_KG">{t("biz.perKg")}</option>
+                <option value="PACKAGE">{t("biz.perPackage")}</option>
               </select>
             </label>
             <label>
@@ -189,7 +190,8 @@ export default function Services() {
             <span>{s.turnaround_hours}h</span>
             <strong>
               {money(s.price)}
-              {s.pricing_model === "PER_KG" && t("common.perKg")}
+              {s.pricing_model !== "PER_ITEM" &&
+                t(`walkin.unit.${s.pricing_model}`)}
             </strong>
             <button
               className={"toggle " + (s.active ? "on" : "")}

@@ -5,6 +5,7 @@ import "./i18n";
 import "./styles.css";
 import "./business.css";
 import "./customer.css";
+import "./ops.css";
 import App from "./App";
 
 createRoot(document.getElementById("root")!).render(

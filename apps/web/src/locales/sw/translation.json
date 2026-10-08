@@ -50,7 +50,8 @@
     "continue": "Endelea",
     "wait": "Subiri kidogo…",
     "loading": "Inapakia…",
-    "close": "Funga"
+    "close": "Funga",
+    "cancel": "Ghairi"
   },
   "market": {
     "title": "Tafuta laundry",
@@ -104,7 +105,15 @@
     "hours": "Saa za kazi",
     "replaceCart": "Kikapu chako kina vitu kutoka {{name}}. Uanze kikapu kipya hapa?"
   },
-  "days": { "mon": "Jumatatu", "tue": "Jumanne", "wed": "Jumatano", "thu": "Alhamisi", "fri": "Ijumaa", "sat": "Jumamosi", "sun": "Jumapili" },
+  "days": {
+    "mon": "Jumatatu",
+    "tue": "Jumanne",
+    "wed": "Jumatano",
+    "thu": "Alhamisi",
+    "fri": "Ijumaa",
+    "sat": "Jumamosi",
+    "sun": "Jumapili"
+  },
   "cart": {
     "summary_one": "Kitu {{count}}",
     "summary_other": "Vitu {{count}}",
@@ -145,7 +154,13 @@
       "payment": "Utalipa vipi?",
       "review": "Hakiki na weka oda"
     },
-    "stepShort": { "fulfilment": "Kuchukua", "address": "Anwani", "schedule": "Muda", "payment": "Malipo", "review": "Hakiki" },
+    "stepShort": {
+      "fulfilment": "Kuchukua",
+      "address": "Anwani",
+      "schedule": "Muda",
+      "payment": "Malipo",
+      "review": "Hakiki"
+    },
     "pickup": "Tuchukue",
     "pickupBody": "Mjumbe atachukua mlangoni kwako na kuzirudisha.",
     "pickupUnavailable": "Laundry hii haichukui nguo nyumbani.",
@@ -209,8 +224,19 @@
     "yourReview": "Maoni yako",
     "reorderNothing": "Hakuna huduma kati ya hizi inayopatikana tena."
   },
-  "orders": { "title": "Oda zangu", "track": "Fuatilia oda", "reorder": "Agiza tena" },
-  "payment": { "PENDING": "Bado haijalipwa", "PROCESSING": "Inashughulikiwa", "PAID": "Imelipwa", "FAILED": "Malipo yameshindikana", "REFUNDED": "Imerudishwa" },
+  "orders": {
+    "title": "Oda zangu",
+    "track": "Fuatilia oda",
+    "reorder": "Agiza tena"
+  },
+  "payment": {
+    "PENDING": "Bado haijalipwa",
+    "PROCESSING": "Inashughulikiwa",
+    "PAID": "Imelipwa",
+    "FAILED": "Malipo yameshindikana",
+    "REFUNDED": "Imerudishwa",
+    "PARTIAL": "Imelipwa sehemu"
+  },
   "status": {
     "NEW": "Imewekwa",
     "ACCEPTED": "Imekubaliwa",
@@ -274,7 +300,10 @@
     "REASON_REQUIRED": "Tafadhali eleza sababu.",
     "APPLICATION_EXISTS": "Tayari umeshaomba."
   },
-  "footer": { "tagline": "Nguo safi, bila usumbufu. Karibu Launder.", "rights": "Imetengenezwa Tanzania." },
+  "footer": {
+    "tagline": "Nguo safi, bila usumbufu. Karibu Launder.",
+    "rights": "Imetengenezwa Tanzania."
+  },
   "biz": {
     "showing": "Inaonyesha {{from}}–{{to}} kati ya {{total}}",
     "previous": "Iliyopita",
@@ -282,14 +311,34 @@
     "workspace": "Eneo la kazi",
     "menu": "Menyu",
     "signOut": "Toka",
-    "nav": { "dashboard": "Dashibodi", "orders": "Oda", "customers": "Wateja", "services": "Huduma na bei", "payments": "Malipo", "marketplace": "Soko", "settings": "Mipangilio" },
+    "nav": {
+      "dashboard": "Dashibodi",
+      "orders": "Oda",
+      "customers": "Wateja",
+      "services": "Huduma na bei",
+      "payments": "Malipo",
+      "marketplace": "Soko",
+      "settings": "Mipangilio",
+      "reports": "Ripoti"
+    },
     "morning": "Habari za asubuhi",
     "afternoon": "Habari za mchana",
     "evening": "Habari za jioni",
-    "metrics": { "newOrders": "Oda mpya", "todayOrders": "Oda za leo", "todayRevenue": "Malipo ya leo", "ready": "Tayari kuchukuliwa", "outstanding": "Hazijalipwa" },
+    "metrics": {
+      "newOrders": "Oda mpya",
+      "todayOrders": "Oda za leo",
+      "todayRevenue": "Malipo ya leo",
+      "ready": "Tayari kuchukuliwa",
+      "outstanding": "Hazijalipwa"
+    },
     "orderMix": "Mchanganyiko wa oda",
     "whereFrom": "Oda zinatoka wapi",
-    "source": { "MARKETPLACE": "Soko", "WALK_IN": "Dukani", "PHONE": "Simu", "WHATSAPP": "WhatsApp" },
+    "source": {
+      "MARKETPLACE": "Soko",
+      "WALK_IN": "Dukani",
+      "PHONE": "Simu",
+      "WHATSAPP": "WhatsApp"
+    },
     "paidRevenue": "Mapato yaliyolipwa",
     "avgOrder": "Wastani wa oda",
     "commission": "Kamisheni ya soko",
@@ -300,9 +349,22 @@
     "recentOrders": "Oda za karibuni",
     "viewAll": "Ona zote",
     "noOrders": "Bado hakuna oda.",
-    "col": { "order": "Oda", "customer": "Mteja", "source": "Chanzo", "status": "Hali", "total": "Jumla" },
+    "col": {
+      "order": "Oda",
+      "customer": "Mteja",
+      "source": "Chanzo",
+      "status": "Hali",
+      "total": "Jumla"
+    },
     "searchOrders": "Tafuta namba ya oda, jina au simu",
-    "filters": { "0": "Oda zote", "1": "Mpya", "2": "Zinaendelea", "3": "Tayari / njiani", "4": "Zimefika / zimekamilika", "5": "Zimeghairiwa / zimekataliwa" },
+    "filters": {
+      "0": "Oda zote",
+      "1": "Mpya",
+      "2": "Zinaendelea",
+      "3": "Tayari / njiani",
+      "4": "Zimefika / zimekamilika",
+      "5": "Zimeghairiwa / zimekataliwa"
+    },
     "exportCsv": "Pakua CSV",
     "notes": "Maelezo",
     "notesHint": "Madoa, aina ya kitambaa, chochote timu inapaswa kujua",
@@ -334,19 +396,38 @@
     "opens": "Inafunguliwa",
     "closes": "Inafungwa",
     "staff": "Timu",
-    "role": { "BUSINESS_OWNER": "Mmiliki", "BRANCH_MANAGER": "Meneja", "STAFF": "Mfanyakazi" },
+    "role": {
+      "BUSINESS_OWNER": "Mmiliki",
+      "BRANCH_MANAGER": "Meneja",
+      "STAFF": "Mfanyakazi",
+      "CASHIER": "Keshia",
+      "DRIVER": "Dereva"
+    },
     "roleLabel": "Wadhifa",
     "tempPassword": "Nenosiri la muda",
     "addStaff": "Ongeza mwanatimu",
     "profileAndLocation": "Taarifa za biashara na mahali",
     "searchCustomers": "Tafuta jina au simu",
     "usesApp": "Programu ya Launder",
-    "paymentsIntro": "Oda zilizokamilika ambazo bado hazijalipwa. Fungua oda kurekodi malipo ya taslimu."
+    "paymentsIntro": "Oda zilizokamilika ambazo bado hazijalipwa. Fungua oda kurekodi malipo ya taslimu.",
+    "perPackage": "Kwa kifurushi"
   },
   "bizAuth": {
-    "login": { "title": "Karibu tena.", "body": "Ingia kwenye eneo la kazi la laundry yako.", "submit": "Ingia" },
-    "register": { "title": "Endesha laundry yako na Launder.", "body": "Ni bure kuanza. Jiunge na soko pale utakapokuwa tayari.", "submit": "Fungua akaunti ya biashara" },
-    "admin": { "title": "Usimamizi wa jukwaa", "body": "Kwa wafanyakazi walioidhinishwa wa Launder tu.", "submit": "Ingia" },
+    "login": {
+      "title": "Karibu tena.",
+      "body": "Ingia kwenye eneo la kazi la laundry yako.",
+      "submit": "Ingia"
+    },
+    "register": {
+      "title": "Endesha laundry yako na Launder.",
+      "body": "Ni bure kuanza. Jiunge na soko pale utakapokuwa tayari.",
+      "submit": "Fungua akaunti ya biashara"
+    },
+    "admin": {
+      "title": "Usimamizi wa jukwaa",
+      "body": "Kwa wafanyakazi walioidhinishwa wa Launder tu.",
+      "submit": "Ingia"
+    },
     "fullName": "Jina lako kamili",
     "businessName": "Jina la biashara",
     "email": "Barua pepe",
@@ -358,7 +439,13 @@
     "promiseBody": "Kutumia Launder Business hakukuweki hadharani. Soko ni ombi tofauti na la hiari."
   },
   "mp": {
-    "status": { "NOT_ENROLLED": "Haiko sokoni", "PENDING_REVIEW": "Inakaguliwa", "ACTIVE": "Iko hewani", "REJECTED": "Haikuidhinishwa", "SUSPENDED": "Imesimamishwa" },
+    "status": {
+      "NOT_ENROLLED": "Haiko sokoni",
+      "PENDING_REVIEW": "Inakaguliwa",
+      "ACTIVE": "Iko hewani",
+      "REJECTED": "Haikuidhinishwa",
+      "SUSPENDED": "Imesimamishwa"
+    },
     "headline": {
       "NOT_ENROLLED": "Wafikie wateja walio karibu",
       "PENDING_REVIEW": "Ombi lako linakaguliwa",
@@ -377,7 +464,12 @@
     "submittedOn": "Liliwasilishwa {{date}}",
     "refresh": "Angalia hali tena",
     "checklist": "Kabla ya kuomba",
-    "check": { "profile": "Jina la biashara, simu na maelezo", "location": "Eneo, anwani na mahali kwenye ramani", "services": "Angalau huduma moja inayotumika", "hours": "Saa za kazi" },
+    "check": {
+      "profile": "Jina la biashara, simu na maelezo",
+      "location": "Eneo, anwani na mahali kwenye ramani",
+      "services": "Angalau huduma moja inayotumika",
+      "hours": "Saa za kazi"
+    },
     "fix": "Kamilisha",
     "apply": "Omba kujiunga na soko",
     "contact": "Mtu wa mawasiliano",
@@ -389,10 +481,20 @@
   },
   "onb": {
     "setup": "Kuanzisha biashara",
-    "steps": { "profile": "Taarifa na mahali", "hours": "Saa za kazi", "services": "Huduma na bei", "done": "Tayari" },
+    "steps": {
+      "profile": "Taarifa na mahali",
+      "hours": "Saa za kazi",
+      "services": "Huduma na bei",
+      "done": "Tayari"
+    },
     "stepOf": "Hatua {{step}} kati ya {{total}}",
     "later": "Malizia baadaye",
-    "titles": { "profile": "Waambie wateja wewe ni nani", "hours": "Mko wazi saa ngapi?", "services": "Bei zako ni zipi?", "done": "Uko tayari" },
+    "titles": {
+      "profile": "Waambie wateja wewe ni nani",
+      "hours": "Mko wazi saa ngapi?",
+      "services": "Bei zako ni zipi?",
+      "done": "Uko tayari"
+    },
     "intros": {
       "profile": "Jina, simu na mahali ulipo. Unaweza kubadilisha wakati wowote.",
       "hours": "Muda wa kuchukua nguo unatokana na saa hizi.",
@@ -408,7 +510,16 @@
   },
   "admin": {
     "title": "Usimamizi wa jukwaa",
-    "tabs": { "dashboard": "Muhtasari", "applications": "Maombi ya soko", "businesses": "Biashara", "orders": "Oda", "customers": "Wateja", "payments": "Malipo", "reviews": "Maoni", "audit": "Kumbukumbu za ukaguzi" },
+    "tabs": {
+      "dashboard": "Muhtasari",
+      "applications": "Maombi ya soko",
+      "businesses": "Biashara",
+      "orders": "Oda",
+      "customers": "Wateja",
+      "payments": "Malipo",
+      "reviews": "Maoni",
+      "audit": "Kumbukumbu za ukaguzi"
+    },
     "stats": {
       "businesses": "Biashara",
       "marketplace_active": "Ziko sokoni",
@@ -420,7 +531,12 @@
       "platform_revenue": "Kamisheni iliyopatikana"
     },
     "reasonPrompt": "Sababu (itahifadhiwa kwenye kumbukumbu na kuonyeshwa kwa biashara):",
-    "decided": { "approve": "{{name}} sasa iko hewani.", "reject": "{{name}} haikuidhinishwa.", "suspend": "{{name}} imesimamishwa.", "reinstate": "{{name}} iko hewani tena." },
+    "decided": {
+      "approve": "{{name}} sasa iko hewani.",
+      "reject": "{{name}} haikuidhinishwa.",
+      "suspend": "{{name}} imesimamishwa.",
+      "reinstate": "{{name}} iko hewani tena."
+    },
     "review": "Kagua",
     "approve": "Idhinisha",
     "reject": "Kataa",
@@ -434,5 +550,457 @@
     "hide": "Ficha",
     "publish": "Chapisha",
     "system": "Mfumo"
+  },
+  "ops": {
+    "dash": {
+      "greeting": "{{greeting}}, {{name}}",
+      "today": "Leo",
+      "ordersToday": "Oda za leo",
+      "salesToday": "Mauzo ya leo",
+      "ready": "Tayari kuchukuliwa",
+      "outstanding": "Madeni ya wateja",
+      "processing": "Zinashughulikiwa",
+      "dueToday": "Zinatakiwa leo",
+      "pickups": "Za kuchukua kwa wateja",
+      "deliveries": "Za kupeleka",
+      "processingSub": "{{count}} zinashughulikiwa",
+      "collectedSub": "{{amount}} zimekusanywa leo",
+      "readyUnpaidSub_one": "{{count}} bado haijalipwa",
+      "readyUnpaidSub_other": "{{count}} bado hazijalipwa",
+      "ordersCount_one": "oda {{count}}",
+      "ordersCount_other": "oda {{count}}",
+      "overdueSub_one": "na {{count}} imechelewa",
+      "overdueSub_other": "na {{count}} zimechelewa",
+      "attention": "Zinahitaji umakini",
+      "attentionQ": "Kazi na fedha za kushughulikia sasa",
+      "allClear": "Hakuna kinachohitaji umakini wako sasa hivi.",
+      "allClearSub": "Oda zilizochelewa, malipo, safari za kuchukua na nguo zisizochukuliwa zitaonekana hapa.",
+      "allClearNew": "Oda zikianza kuingia, chochote kilichochelewa au kisicholipwa kitaonekana hapa.",
+      "operations": "Shughuli za leo",
+      "operationsQ_one": "Oda {{count}} iliyo wazi, kwa hatua",
+      "operationsQ_other": "Oda {{count}} zilizo wazi, kwa hatua",
+      "performance": "Utendaji wa biashara",
+      "performanceQ": "Je, tunakua? Mwezi huu hadi sasa, ukilinganisha na siku hizo mwezi uliopita.",
+      "openMonthly": "Ripoti ya mwezi",
+      "trend": "Mwenendo",
+      "trend_sales": "Mauzo kwa siku, siku 30 zilizopita",
+      "trend_orders": "Oda kwa siku, siku 30 zilizopita",
+      "trendNote": "Leo imefifishwa kwa sababu siku bado haijaisha.",
+      "insights": "Takwimu zinasema nini",
+      "insightsNote": "Zimehesabiwa kutoka oda zako. Huonyeshwa tu kukiwa na data ya kutosha.",
+      "marketplace": "Soko la Launder",
+      "marketplaceQ": "Je, Soko la Launder linakuletea biashara? Mwezi huu hadi sasa.",
+      "customers": "Wateja",
+      "customersQ": "Je, wateja wanarudi? Mwezi huu hadi sasa.",
+      "details": "Maelezo",
+      "notSeen": "Hawajaonekana siku za karibuni"
+    },
+    "quick": {
+      "newOrder": "Oda mpya ya dukani",
+      "addCustomer": "Ongeza mteja",
+      "receivePayment": "Pokea malipo",
+      "readyOrders": "Oda zilizo tayari",
+      "deliveries": "Safari zangu"
+    },
+    "first": {
+      "kicker": "Karibu Launder",
+      "title": "Tuandae biashara yako",
+      "text": "Hatua chache tu na utaweza kupokea oda yako ya kwanza. Kila unachoweka hapa kinahifadhiwa papo hapo.",
+      "progress": "{{done}} kati ya {{total}} zimekamilika",
+      "steps": {
+        "business": "Biashara imesajiliwa",
+        "location": "Weka anwani na mahali kwenye ramani",
+        "services": "Weka huduma na bei zako",
+        "hours": "Weka saa za kazi",
+        "first_order": "Tengeneza oda yako ya kwanza",
+        "staff": "Alika wafanyakazi wako",
+        "marketplace": "Jiunge na Soko la Launder (hiari)"
+      }
+    },
+    "attention": {
+      "overdue_one": "Oda {{count}} imechelewa",
+      "overdue_other": "Oda {{count}} zimechelewa",
+      "marketplace_new_one": "Oda {{count}} ya Soko inasubiri kukubaliwa",
+      "marketplace_new_other": "Oda {{count}} za Soko zinasubiri kukubaliwa",
+      "payments_stuck_one": "Malipo {{count}} ya simu yanasubiri zaidi ya dakika {{minutes}}",
+      "payments_stuck_other": "Malipo {{count}} ya simu yanasubiri zaidi ya dakika {{minutes}}",
+      "due_today_one": "Oda {{count}} inatakiwa baadaye leo",
+      "due_today_other": "Oda {{count}} zinatakiwa baadaye leo",
+      "dueSoon_one": "{{count}} ndani ya saa {{hours}} zijazo",
+      "dueSoon_other": "{{count}} ndani ya saa {{hours}} zijazo",
+      "pickups_today_one": "Nguo za mteja {{count}} za kuchukua leo",
+      "pickups_today_other": "Nguo za wateja {{count}} za kuchukua leo",
+      "deliveries_one": "Oda {{count}} ya kupeleka",
+      "deliveries_other": "Oda {{count}} za kupeleka",
+      "outstanding_one": "{{amount}} hazijalipwa kwa oda {{count}}",
+      "outstanding_other": "{{amount}} hazijalipwa kwa oda {{count}}",
+      "uncollected_one": "Oda {{count}} iliyo tayari haijachukuliwa baada ya saa {{hours}}",
+      "uncollected_other": "Oda {{count}} zilizo tayari hazijachukuliwa baada ya saa {{hours}}",
+      "cta": {
+        "overdue": "Angalia oda",
+        "marketplace_new": "Kagua",
+        "payments_stuck": "Kagua",
+        "due_today": "Angalia",
+        "pickups_today": "Panga safari",
+        "deliveries": "Angalia",
+        "outstanding": "Angalia malipo",
+        "uncollected": "Wapigie wateja"
+      }
+    },
+    "compare": {
+      "previous_day_same_weekday": "dhidi ya siku hiyo wiki iliyopita",
+      "previous_day_same_weekday_partial": "dhidi ya muda huu wiki iliyopita",
+      "previous_week": "dhidi ya wiki iliyopita",
+      "previous_week_partial": "dhidi ya hatua hii wiki iliyopita",
+      "previous_month": "dhidi ya mwezi uliopita",
+      "previous_month_partial": "dhidi ya siku hizo mwezi uliopita",
+      "previous_period": "dhidi ya kipindi kilichopita",
+      "previous_period_partial": "dhidi ya kipindi kilichopita",
+      "same": "Karibu sawa",
+      "notEnough": "Bado hakuna historia ya kutosha kulinganisha",
+      "notEnoughLong": "Ulinganisho umefichwa kwa sababu kipindi kilichopita kilikuwa na oda chini ya 5."
+    },
+    "metric": {
+      "salesMtd": "Mauzo ya mwezi huu",
+      "orders": "Oda",
+      "averageOrder": "Wastani wa oda",
+      "collected": "Yaliyokusanywa",
+      "fromPrevious": "kutoka {{amount}}"
+    },
+    "insight": {
+      "busiest_day": "{{weekday}} ndiyo siku yenye kazi nyingi zaidi — wastani wa oda {{average}} katika wiki 8 zilizopita.",
+      "top_service": "{{name}} imeleta {{share}} ya mapato ya huduma mwezi huu.",
+      "marketplace_share": "{{share}} ya oda za mwezi huu zimetoka Soko la Launder.",
+      "aov_up": "Wastani wa oda yako umepanda kwa {{change}} mwezi huu ({{value}}, kutoka {{previous}}).",
+      "aov_down": "Wastani wa oda yako umeshuka kwa {{change}} mwezi huu ({{value}}, kutoka {{previous}}).",
+      "repeat_customers_one": "Mteja {{count}} ameagiza zaidi ya mara moja mwezi huu.",
+      "repeat_customers_other": "Wateja {{count}} wameagiza zaidi ya mara moja mwezi huu.",
+      "late_orders_one": "Oda {{count}} ilikuwa tayari baada ya muda ulioahidiwa mwezi huu.",
+      "late_orders_other": "Oda {{count}} zilikuwa tayari baada ya muda ulioahidiwa mwezi huu."
+    },
+    "mp": {
+      "orders": "Oda za Soko",
+      "sales": "Mauzo ya Soko",
+      "commission": "Kamisheni ({{rate}}%)",
+      "share": "Sehemu ya biashara",
+      "ofOrders": "ya oda",
+      "ofSales": "ya mauzo",
+      "average": "Wastani wa oda ya Soko",
+      "customers": "Wateja wa Soko",
+      "newCustomers_one": "{{count}} mpya kwako",
+      "newCustomers_other": "{{count}} wapya kwako",
+      "rating": "Ukadiriaji kwenye Soko",
+      "gmv": "Mauzo ya Soko (wateja walilipa)",
+      "commissionAccrued": "Kamisheni ya Launder, oda zilizokamilika ({{rate}}%)",
+      "accruedHint": "Hutozwa oda inapokamilika",
+      "commissionPending": "Kamisheni inayotarajiwa",
+      "pendingHint": "Makadirio kwa oda za Soko ambazo bado hazijakamilika",
+      "net": "Mapato yako halisi kutoka Soko",
+      "how": "Kamisheni ni {{rate}}% ya huduma za dobi kwenye oda za Soko. Ada za kuchukua nguo na oda za dukani, simu na WhatsApp hazitozwi kamwe.",
+      "notEnrolled": "Huko kwenye Soko la Launder."
+    },
+    "cust": {
+      "unique": "Wateja waliohudumiwa",
+      "new": "Wateja wapya",
+      "returning": "Wateja waliorudi",
+      "repeatRate": "Kiwango cha kurudi",
+      "multi": "Wameagiza zaidi ya mara moja",
+      "fromMarketplace": "Wapya kupitia Soko",
+      "multiOrder_one": "Mteja {{count}} ameagiza zaidi ya mara moja.",
+      "multiOrder_other": "Wateja {{count}} wameagiza zaidi ya mara moja.",
+      "definitions": "Mpya = oda yake ya kwanza kwako katika kipindi hiki. Aliyerudi = aliwahi kuagiza kabla. Kiwango cha kurudi = waliorudi ÷ wateja wote waliohudumiwa.",
+      "top": "Wateja wakubwa",
+      "topQ": "Nani anatumia zaidi kwako katika kipindi hiki?",
+      "add": "Ongeza mteja",
+      "save": "Hifadhi mteja",
+      "notes": "Maelezo",
+      "notesHint": "mf. bila wanga, anapendelea WhatsApp",
+      "noNotes": "Hakuna maelezo bado.",
+      "segments": "Makundi ya wateja",
+      "sort": "Panga",
+      "sortBy": {
+        "recent": "Wa karibuni",
+        "spend": "Matumizi makubwa",
+        "orders": "Oda nyingi",
+        "name": "Jina"
+      },
+      "orders": "Oda",
+      "spend": "Matumizi",
+      "lastOrder": "Oda ya mwisho",
+      "lifetime": "Jumla ya matumizi",
+      "average": "wastani wa oda {{amount}}",
+      "outstanding": "Deni",
+      "owes": "anadaiwa {{amount}}",
+      "since": "tangu {{date}}",
+      "daysAgo_one": "siku {{count}} iliyopita",
+      "daysAgo_other": "siku {{count}} zilizopita",
+      "none": "Hakuna mteja anayelingana.",
+      "inactiveHint": "Wateja ambao oda yao ya mwisho ilikuwa zaidi ya siku 45 zilizopita — wapigie simu au watumie WhatsApp kwa upole.",
+      "newOrderFor": "Oda mpya",
+      "call": "Piga simu",
+      "recentOrders": "Oda za karibuni",
+      "preferred": "Huagiza mara nyingi",
+      "inOrders_one": "katika oda {{count}}",
+      "inOrders_other": "katika oda {{count}}",
+      "noServices": "Bado hakuna oda."
+    },
+    "segment": {
+      "all": "Wote",
+      "new": "Wapya",
+      "returning": "Waliorudi",
+      "frequent": "Wa mara kwa mara",
+      "inactive": "Hawajaonekana siku 45",
+      "outstanding": "Wanadaiwa"
+    },
+    "view": {
+      "all": "Zote",
+      "new": "Mpya",
+      "in_progress": "Zinaendelea",
+      "ready": "Tayari",
+      "delivery": "Kuchukua na kupeleka",
+      "completed": "Zimekamilika",
+      "cancelled": "Zimeghairiwa"
+    },
+    "dueFilter": {
+      "overdue": "Zimechelewa",
+      "today": "Zinatakiwa leo",
+      "uncollected": "Hazijachukuliwa"
+    },
+    "paymentFilter": {
+      "outstanding": "Zinadaiwa (zimekubaliwa, hazijalipwa)",
+      "unpaid": "Hazijalipwa",
+      "paid": "Zimelipwa",
+      "processing": "Malipo ya simu yanashughulikiwa"
+    },
+    "orders": {
+      "views": "Mionekano ya oda",
+      "urgency": "Kazi za haraka",
+      "from": "Kuanzia",
+      "to": "Hadi",
+      "anySource": "Chanzo chochote",
+      "anyPayment": "Malipo yoyote",
+      "clear": "Ondoa vichujio",
+      "remove": "Ondoa kichujio",
+      "noMatch": "Hakuna oda zinazolingana na vichujio hivi.",
+      "oneCustomer": "Mteja mmoja"
+    },
+    "col": {
+      "items": "Nguo",
+      "due": "Muda"
+    },
+    "due": {
+      "lateHours_one": "Imechelewa saa {{count}}",
+      "lateHours_other": "Imechelewa saa {{count}}",
+      "lateDays_one": "Imechelewa siku {{count}}",
+      "lateDays_other": "Imechelewa siku {{count}}",
+      "at": "Inatakiwa {{time}}",
+      "on": "Inatakiwa {{date}}",
+      "readyDays_one": "Tayari siku {{count}}",
+      "readyDays_other": "Tayari siku {{count}}"
+    },
+    "detail": {
+      "promised": "Imeahidiwa {{time}}",
+      "readyAt": "Tayari tangu {{time}}",
+      "noPromise": "Hakuna muda ulioahidiwa",
+      "changePromise": "Badilisha"
+    },
+    "newOrder": {
+      "known_one": "Mteja anayerudi · oda {{count}} kabla",
+      "known_other": "Mteja anayerudi · oda {{count}} kabla",
+      "hours_one": "saa {{count}}",
+      "hours_other": "saa {{count}}",
+      "promised": "Muda ulioahidiwa kuwa tayari",
+      "promisedHint": "Umewekwa kwa huduma inayochukua muda mrefu zaidi. Badilisha ukimwahidi mteja muda mwingine.",
+      "discount": "Punguzo (TZS)",
+      "afterDiscount": "baada ya punguzo la {{amount}}",
+      "paidNow": "Malipo"
+    },
+    "pay": {
+      "later": "Atalipa akichukua",
+      "CASH": "Amelipa taslimu sasa",
+      "MOBILE_MONEY": "Amelipa kwa simu sasa",
+      "reference": "Namba ya muamala (mf. msimbo wa M-Pesa)",
+      "noReference": "Rekodi malipo haya ya simu bila namba ya muamala?",
+      "recordMobile": "Rekodi malipo ya simu",
+      "confirm": "Rekodi {{amount}}",
+      "mobileShort": "Pesa kwa simu",
+      "intro": "Ulichouza, ulichokusanya na nani bado anadaiwa — vimetenganishwa ili hesabu ziwe sahihi kila wakati.",
+      "owed_one": "Unadai (oda {{count}})",
+      "owed_other": "Unadai (oda {{count}})",
+      "owedHint": "Oda zilizokubaliwa ambazo hazijalipwa. Rekodi malipo mteja anapolipa.",
+      "nothingOwed": "Hakuna anayekudai sasa hivi.",
+      "received": "Malipo yaliyopokelewa",
+      "noneReceived": "Hakuna malipo katika kipindi hiki.",
+      "mix": "Wateja walivyolipa",
+      "mixQ": "Fedha zilizokusanywa katika kipindi hiki, kwa njia ya malipo.",
+      "payments_one": "malipo {{count}}",
+      "payments_other": "malipo {{count}}",
+      "ofTotal": "kati ya {{amount}}"
+    },
+    "money": {
+      "title": "Fedha",
+      "q": "Mauzo, makusanyo na madeni ni namba tofauti.",
+      "sales": "Mauzo",
+      "salesHint": "Thamani ya oda zilizopokelewa katika kipindi hiki",
+      "discounts": "Punguzo lililotolewa",
+      "collected": "Yaliyokusanywa",
+      "collectedHint": "Fedha zilizopokelewa katika kipindi hiki, kwa oda yoyote",
+      "refunded": "Yaliyorudishwa",
+      "unpaidFromPeriod": "Hazijalipwa kutoka oda hizi",
+      "outstanding": "Madeni sasa",
+      "outstandingHint": "Oda zote zilizokubaliwa ambazo bado hazijalipwa"
+    },
+    "book": {
+      "title": "Oda",
+      "q": "Kilichoingia, kilichotoka na kinachobaki.",
+      "opening": "Zilizokuwa wazi mwanzoni",
+      "new": "Oda mpya",
+      "completed": "Zimekamilika",
+      "cancelled": "Zimeghairiwa au kukataliwa",
+      "carried_forward": "Zinazoendelea"
+    },
+    "src": {
+      "title": "Oda zilitoka wapi",
+      "q": "Njia zipi zinakuletea kazi?"
+    },
+    "ops": {
+      "title": "Uendeshaji",
+      "q": "Kazi ilivyokwenda, na kama ahadi zilitimizwa.",
+      "received": "Zimepokelewa",
+      "washing": "Zimefuliwa",
+      "ironing": "Zimepigwa pasi",
+      "ready": "Tayari",
+      "delivered": "Zimefikishwa",
+      "completed": "Zimekamilika",
+      "onTime": "Tayari kwa wakati",
+      "onTimeOf": "{{late}} zimechelewa kati ya {{total}}",
+      "turnaround": "Wastani wa muda hadi kuwa tayari",
+      "hours_one": "saa {{count}}",
+      "hours_other": "saa {{count}}",
+      "overdueNow": "Zimechelewa sasa hivi",
+      "cancellation": "Kiwango cha kughairi"
+    },
+    "svc": {
+      "title": "Huduma",
+      "q": "Wateja wananunua nini, na huduma zipi zinaleta pesa?",
+      "byRevenue": "Kwa mapato",
+      "byOrders": "Kwa idadi ya oda",
+      "orders_one": "oda {{count}}",
+      "orders_other": "oda {{count}}",
+      "note": "Mapato ya huduma ni kabla ya punguzo na ada za kuchukua nguo."
+    },
+    "daily": {
+      "title": "Siku kwa siku",
+      "q": "Siku zipi zilikuwa na kazi nyingi na zipi zilikuwa tulivu?",
+      "table": "Onyesha takwimu kwa siku",
+      "date": "Siku"
+    },
+    "week": {
+      "title": "Siku zenye kazi nyingi",
+      "q": "Wastani wa oda kwa kila siku ya wiki katika wiki {{weeks}} zilizopita — itumie kupanga wafanyakazi.",
+      "avg_one": "wastani wa oda {{count}}",
+      "avg_other": "wastani wa oda {{count}}"
+    },
+    "close": {
+      "title": "Funga siku",
+      "q": "Hakikisha kilichopaswa kuwa kwenye droo kabla ya kufunga.",
+      "expectedCash": "Taslimu inayotarajiwa",
+      "expectedMobile": "Pesa za simu zilizopokelewa",
+      "expectedTotal": "Jumla iliyokusanywa leo",
+      "countedLabel": "Taslimu iliyohesabiwa (TZS)",
+      "note": "Maelezo (hiari)",
+      "submit": "Funga siku",
+      "noLock": "Kufunga kunahifadhi jumla na taslimu uliyohesabu. Hakuna kinachofungiwa — malipo ya baadaye yanarekodiwa kama kawaida.",
+      "closedBy": "Imefungwa na {{name}} saa {{time}}",
+      "counted": "Taslimu iliyohesabiwa {{amount}}",
+      "balanced": "Taslimu inalingana",
+      "variance": "Tofauti {{amount}}"
+    },
+    "period": {
+      "label": "Kipindi",
+      "today": "Leo",
+      "yesterday": "Jana",
+      "last_7_days": "Siku 7 zilizopita",
+      "this_week": "Wiki hii",
+      "last_week": "Wiki iliyopita",
+      "this_month": "Mwezi huu",
+      "last_month": "Mwezi uliopita",
+      "custom": "Tarehe maalum",
+      "from": "Kuanzia",
+      "to": "Hadi"
+    },
+    "reports": {
+      "intro": "Ripoti ambazo dobi hutumia kweli: funga siku, kagua wiki, elewa mwezi. Chapisha, hifadhi kama PDF au pakua CSV.",
+      "kind": {
+        "daily": "Ripoti ya mwisho wa siku",
+        "weekly": "Utendaji wa wiki",
+        "monthly": "Ripoti ya biashara ya mwezi",
+        "sales": "Ripoti ya mauzo",
+        "orders": "Ripoti ya oda",
+        "customers": "Ripoti ya wateja",
+        "marketplace": "Ripoti ya Soko",
+        "payments": "Ripoti ya malipo"
+      },
+      "about": {
+        "daily": "Kilichotokea leo, kilichokusanywa, na kufunga siku.",
+        "weekly": "Wiki hii dhidi ya wiki iliyopita.",
+        "monthly": "Mwezi mzima: mauzo, wateja, huduma, Soko, uendeshaji.",
+        "sales": "Mauzo kwa siku na kwa huduma.",
+        "orders": "Mtiririko wa oda, vyanzo na kutimiza ahadi.",
+        "customers": "Wateja wapya, waliorudi na wakubwa.",
+        "marketplace": "Oda za Soko, kamisheni na mapato yako halisi.",
+        "payments": "Makusanyo kwa njia ya malipo na madeni."
+      },
+      "print": "Chapisha / PDF",
+      "laundry": "Dobi",
+      "branch": "Tawi",
+      "generated": "Imetolewa",
+      "inProgress": "Kipindi hiki bado kinaendelea; ulinganisho unatumia hatua hiyo hiyo ya kipindi kilichopita."
+    },
+    "roleAbout": {
+      "STAFF": "Wafanyakazi wa dobi wanaona foleni ya kazi, nguo, hatua na muda unaotakiwa. Hawaoni takwimu za fedha.",
+      "CASHIER": "Keshia hutengeneza oda, hutafuta wateja, hupokea malipo na hukabidhi oda zilizo tayari.",
+      "DRIVER": "Madereva wanaona oda za kuchukua na kupeleka tu, na wanaweza kurekodi taslimu waliyopokea wanapofikisha.",
+      "BRANCH_MANAGER": "Mameneja huendesha siku: oda, malipo, huduma, timu na ripoti za siku na wiki."
+    }
+  },
+  "walkin": {
+    "title": "Oda mpya ya dukani",
+    "kicker": "Kaunta",
+    "customer": "Mteja (hiari)",
+    "searchPlaceholder": "Tafuta simu au jina — au acha wazi kwa mteja wa papo hapo",
+    "matches": "Wateja wanaolingana",
+    "changeCustomer": "Badilisha mteja",
+    "newCustomerName": "Jina la mteja mpya",
+    "willSave": "Mteja mpya atahifadhiwa kwa namba hii ya simu.",
+    "guestNamed": "Hakuna anayelingana — oda itakuwa kwa jina “{{name}}” kama mteja wa papo hapo. Andika namba ya simu kumhifadhi mteja.",
+    "guest": "Hakuna maelezo yanayohitajika: oda itakuwa chini ya “Mteja wa dukani”.",
+    "unit": {
+      "PER_ITEM": " /kipande",
+      "PER_KG": " /kg",
+      "PACKAGE": " /kifurushi"
+    },
+    "kgFor": "Kilo za {{name}}",
+    "editServices": "Hariri huduma na bei",
+    "readyBy": "Tayari kufikia",
+    "pay": {
+      "later": "Atalipa akichukua",
+      "full": "Amelipa yote",
+      "part": "Amelipa sehemu"
+    },
+    "amountNow": "Kiasi kilichopokelewa sasa (TZS)",
+    "balanceAfter": "Salio {{amount}} akichukua",
+    "createPrint": "Tengeneza na chapisha risiti",
+    "slip": "Risiti ya oda",
+    "backToOrder": "Rudi kwenye oda",
+    "orderNo": "Namba ya oda",
+    "date": "Tarehe",
+    "paid": "Imelipwa",
+    "balanceDue": "Salio linalodaiwa",
+    "fullyPaid": "Imelipwa yote",
+    "slipFooter": "Tafadhali leta risiti hii unapokuja kuchukua nguo zako. Asante!",
+    "collected": "Mteja amechukua",
+    "collectAndPay": "Pokea {{amount}} na kabidhi",
+    "printSlip": "Chapisha risiti ya oda"
   }
 }

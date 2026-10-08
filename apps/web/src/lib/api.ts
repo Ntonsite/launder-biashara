@@ -142,3 +142,45 @@ export function newIdempotencyKey() {
     ? crypto.randomUUID()
     : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
+
+/** Authenticated file download (CSV exports). Uses the server's filename when it sends one. */
+export async function download(
+  path: string,
+  auth: Audience,
+  fallbackName: string,
+  retried = false,
+): Promise<void> {
+  const session = sessions.get(auth);
+  let response: Response;
+  try {
+    response = await fetch(BASE + path, {
+      headers: session
+        ? { Authorization: `Bearer ${session.access_token}` }
+        : {},
+    });
+  } catch {
+    throw new ApiError(0, "NETWORK", "network");
+  }
+  if (response.status === 401 && session && !retried && (await refresh(auth)))
+    return download(path, auth, fallbackName, true);
+  if (!response.ok) {
+    const data = await response.json().catch(() => null);
+    throw new ApiError(
+      response.status,
+      data?.error?.code ?? "ERROR",
+      data?.error?.message ?? "Request failed",
+    );
+  }
+  const name =
+    /filename="([^"]+)"/.exec(
+      response.headers.get("Content-Disposition") ?? "",
+    )?.[1] ?? fallbackName;
+  const url = URL.createObjectURL(await response.blob());
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = name;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
