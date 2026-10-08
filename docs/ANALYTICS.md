@@ -34,12 +34,14 @@ How every number in the provider workspace is defined and computed. Code: `apps/
 | Frequent (CRM) | 3+ orders in the last 60 days. *Not seen recently* = last order 45+ days ago. Nobody is labelled "churned" |
 | Walk-in guest | One shared record per laundry for customers who leave no details. Its orders count in sales, collections and reports; it is excluded from customer counts and the CRM |
 | Marketplace sales | Sales with `source = MARKETPLACE` |
-| Commission (accrued) | Launder's commission recorded when a Marketplace order completes: rate × laundry services subtotal (never the pickup fee) |
-| Commission still to come | Rate × subtotal of Marketplace orders in the period not yet completed (estimate) |
+| Commission (accrued) | Ledger entries for Marketplace orders created in the period: earned on completion, at the rule fixed when the order was placed, less any reversals (see [MONETIZATION.md](MONETIZATION.md)) |
+| Commission still to come | Estimate for Marketplace orders in the period not yet completed, each at its own rule |
 | Net from Marketplace | Marketplace sales − accrued − estimated commission |
+| What you paid Launder | Subscription payments received + net commission earned in the period (separate from sales) |
 
-Walk-in, phone and WhatsApp orders are **never** charged commission (`OrderService._record_commission`
-returns early for any source other than `MARKETPLACE`; covered by `tests/test_walk_in.py`).
+Walk-in, phone and WhatsApp orders are **never** charged commission (`CommissionService` only accepts
+`source = MARKETPLACE`; covered by `tests/test_walk_in.py` and `tests/test_monetization.py`). Plan features gate
+some reports — see [MONETIZATION.md](MONETIZATION.md#entitlements-enforced-by-the-api).
 
 ## Periods and comparisons
 

@@ -40,6 +40,14 @@ Audit and decisions: [BUSINESS_AUDIT.md](BUSINESS_AUDIT.md). Definitions: [ANALY
 | Join marketplace | Done — readiness checklist → application → admin review |
 | Marketplace orders and commission | Done — same order list; commission accrued on completion, Marketplace only |
 
+## Commercial model
+
+[MONETIZATION.md](MONETIZATION.md). Admin-managed plans (Starter free, Pro TZS 25,000, Business Plus TZS 60,000 as seed
+values), versioned prices, entitlements enforced by the API, trials, renewals, grace and expiry, invoices and manually
+recorded payments, versioned Marketplace commission rules (default 5 %, laundry rates, promotions) with a ledger and
+refund reversals, business-specific terms, pilot programmes, finance role, pricing audit, revenue reporting with
+reconciliation. Provider **Plan & billing** page; admin **Monetization** console.
+
 ## Admin
 
 Overview metrics, marketplace applications (detail, approve/reject/suspend/reinstate with rules and reasons),
@@ -73,6 +81,9 @@ with actor and metadata. All enforced by backend RBAC.
 10. **Package services in the customer app** — the Flutter app lists `PACKAGE` services and orders them in whole
     units, but shows the price without a "per package" label (web shows it). Small app update.
 11. **Thermal printers** — slips print through the browser (80 mm layout); direct ESC/POS printing is not built.
+12. **Subscription payment gateway** — subscription payments are recorded by finance; no online collection yet.
+13. **Tax on invoices** — no VAT / TRA EFD handling on Launder's invoices.
+14. **Billing notifications by SMS/e-mail** — in-app only.
 
 ## Phase 2 (not Phase 1)
 

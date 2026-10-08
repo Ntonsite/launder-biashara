@@ -8,13 +8,13 @@ Everything below was actually executed; nothing is extrapolated.
 
 | Suite | Result |
 |---|---|
-| API — pytest (fresh `launder_test` database on the PostGIS container, migrations 0001–0003 + seed) | **59 passed** |
+| API — pytest (fresh `launder_test` database on the PostGIS container, migrations 0001–0004 + seed) | **67 passed** |
 | API — ruff | clean |
 | API on PostgreSQL 16 + PostGIS 3.4 (Docker) | migrations to `0003` applied over existing data (backfill checked: every order has a promised time, every paid payment a `paid_at`); `ST_DWithin` uses `ix_businesses_geog`; overdue/pipeline counts use `ix_orders_business_status`; Redis rate limiting active |
 | Web — TypeScript (`tsc -b`) | clean |
 | Web — Vitest | **15 passed** |
 | Web — production build | OK (main bundle 119 KB gzip; business/admin lazy-loaded) |
-| Web — Playwright E2E, Chromium, against Docker API | **8 passed** (customer journey, Swahili desktop + Pixel 7, admin review, walk-in counter, dashboard click-through + reports, staff role, phone dashboard in Swahili); provider tests also passed with `--repeat-each=2` |
+| Web — Playwright E2E, Chromium, against Docker API | **13 passed** (customer journey, Swahili, admin review, walk-in counter, dashboard click-through + reports, staff role, phone dashboard, finance admin monetization, read-only admin, free laundry → Pro trial, pilot laundry on desktop and phone); provider tests also passed with `--repeat-each=2` |
 | Web — Docker image (nginx) | builds; serves app, proxies `/api` and `/media`, SPA deep links |
 | Mobile — `flutter analyze` | no issues |
 | Mobile — `flutter test` (unit, repository, widget, layout) | **35 passed** |
@@ -62,6 +62,28 @@ Everything below was actually executed; nothing is extrapolated.
   in the day report, named walk-in customer has a history; paid in full at drop-off; existing customer by id;
   whole package units; phone orders need a phone; another laundry cannot use this laundry's customer; one
   shared guest record per laundry.
+
+## Commercial model (API, `test_monetization.py`, 8 tests)
+
+The brief's 13-step scenario in one test: an admin creates a TZS 25,000/month plan; a laundry subscribes and gets
+a real invoice; finance records the payment (retried with the same idempotency key → one payment); another laundry
+gets 90 days complimentary Pro with no invoice and reverts after expiry; a walk-in order completes with no ledger
+entry; a Marketplace laundry is approved; an order placed at 5 % (TZS 30,000 → 1,500 / 28,500); the default moves
+to 6 % — the next order is charged 6 % while the order placed earlier keeps 5 % although it completes later; a 3 %
+laundry rate applies to the next order; the laundry sees its plan and 3 % terms; a refund writes a reversal and
+cannot be repeated; the revenue report reconciles, separates subscription money from commission and shows the
+laundry's earned / reversed / net; the audit shows the 5.00 → 6.00 change by the finance admin.
+Also: no backdated or overlapping rules, promotions need an end; Starter gets 402 for monthly reports, CSV and
+manager roles but keeps the end-of-day report, the team limit applies, and an admin entitlement change takes effect
+without a deploy; trial → invoice → upgrade credit → downgrade scheduled; unpaid → past due → expired → default plan
+with the invoice voided and the owner notified, billing runs idempotent; a pilot with the INVOICE policy ends into an
+open invoice and no payment, never touching the Marketplace; Marketplace listings pause and resume with plan
+eligibility; operations admins and laundry owners cannot change pricing; owners cannot read other laundries' invoices.
+
+These tests found and fixed: upgrade credit ignored paid periods that had not started yet; a paying laundry upgrading
+was put on a new trial, losing its credit; approval checked plan eligibility after changing the status; the audit
+stored "6" instead of "6.00"; "days left" rounded down (a new 14-day trial showed 13); the admin login rejected
+finance administrators.
 
 ## Web
 
