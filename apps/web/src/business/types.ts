@@ -101,6 +101,7 @@ export type Dashboard = {
     repeat_rate_metric: Metric;
   };
   insights?: Insight[];
+  performance_locked?: boolean;
 };
 
 export type ServiceStat = {

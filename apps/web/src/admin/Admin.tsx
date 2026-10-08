@@ -13,9 +13,11 @@ import {
 import { useSession } from "../lib/useSession";
 import { Notice } from "../customer/ui";
 import { Lang, Pagination } from "../business/shell";
+import Monetization from "./Monetization";
 
 const TABS = [
   "dashboard",
+  "monetization",
   "applications",
   "businesses",
   "orders",
@@ -60,6 +62,7 @@ export default function Admin() {
     try {
       if (tab === "dashboard")
         setStats(await api("/api/v1/admin/dashboard", { auth: "admin" }));
+      else if (tab === "monetization") setData(null);
       else {
         setData(null);
         setData(
@@ -225,7 +228,9 @@ export default function Admin() {
             </article>
           )}
 
-          {tab !== "dashboard" && (
+          {tab === "monetization" && <Monetization role={session.user.role} />}
+
+          {tab !== "dashboard" && tab !== "monetization" && (
             <section className="orders adminData">
               {!data ? (
                 <div className="tableLoading">{t("common.loading")}</div>

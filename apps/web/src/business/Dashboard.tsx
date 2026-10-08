@@ -9,6 +9,7 @@ import {
   CheckCircle2,
   Circle,
   Clock,
+  Lock,
   PackageCheck,
   Plus,
   Sparkles,
@@ -32,6 +33,7 @@ import { Notice } from "../customer/ui";
 import { AppFrame, useProfile } from "./shell";
 import { Bars, Delta, SectionHead, StatCard, useCan } from "./ui";
 import type { Attention, Dashboard as Data, Insight } from "./types";
+import { BillingNotice, type BillingView } from "./Billing";
 
 const REFRESH_MS = 120_000;
 const ICONS: Record<string, typeof Clock> = {
@@ -90,11 +92,24 @@ export default function Dashboard() {
         !error && <div className="tableLoading">{t("common.loading")}</div>
       ) : (
         <div className="opsDash">
+          <BillingBanner />
           {data.first_run && <FirstRun steps={data.first_run} />}
           {data.has_orders && <Today data={data} />}
           <NeedsAttention items={data.attention} hasOrders={data.has_orders} />
           {data.has_orders && <Pipeline counts={data.pipeline} />}
           {data.performance && <Performance data={data} />}
+          {data.performance_locked && (
+            <section className="panel upgradeCard">
+              <Lock aria-hidden />
+              <div>
+                <h2>{t("billing.lockedPerformance")}</h2>
+                <p className="muted">{t("billing.lockedPerformanceText")}</p>
+              </div>
+              <Link className="primary" to="/app/billing">
+                {t("billing.seePlans")}
+              </Link>
+            </section>
+          )}
           {(data.marketplace || data.customers) && (
             <div className="opsCols even dashExtra">
               {data.marketplace && <MarketplaceCard data={data} />}
@@ -105,6 +120,32 @@ export default function Dashboard() {
       )}
     </AppFrame>
   );
+}
+
+/** The one billing message an owner should see on the dashboard (trial/pilot ending, invoice due). */
+function BillingBanner() {
+  const can = useCan();
+  const [top, setTop] = useState<BillingView["notices"][number] | null>(null);
+  const allowed = can("billing.manage");
+  useEffect(() => {
+    if (!allowed) return;
+    api<BillingView>("/api/v1/business/subscription", { auth: "business" })
+      .then((v) => {
+        const order = { danger: 0, warning: 1, info: 2 };
+        const urgent = v.notices.filter(
+          (n) => n.level !== "info" || n.kind.startsWith("invoice"),
+        );
+        setTop(
+          urgent.sort((a, b) => order[a.level] - order[b.level])[0] ?? null,
+        );
+      })
+      .catch(() => undefined);
+  }, [allowed]);
+  return top ? (
+    <div className="dashBanner">
+      <BillingNotice n={top} />
+    </div>
+  ) : null;
 }
 
 function QuickActions() {

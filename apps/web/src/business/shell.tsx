@@ -9,6 +9,7 @@ import {
 import { useTranslation } from "react-i18next";
 import {
   BarChart3,
+  CreditCard,
   LayoutDashboard,
   LogOut,
   Menu,
@@ -41,6 +42,12 @@ export type Profile = {
   review_count: number;
   role: string;
   capabilities: string[];
+  plan?: {
+    name: string;
+    features: string[];
+    source: string;
+    access_until: string | null;
+  };
   hours: {
     weekday: number;
     opens_at: string;
@@ -184,6 +191,7 @@ export function AppFrame({
     [Package, "services", "/app/services", caps.has("services.manage")],
     [Store, "marketplace", "/app/marketplace", caps.has("marketplace.view")],
     [Settings, "settings", "/app/settings", caps.has("settings.manage")],
+    [CreditCard, "billing", "/app/billing", caps.has("billing.manage")],
   ] as const;
 
   async function signOut() {
@@ -210,6 +218,14 @@ export function AppFrame({
             <span>
               {session.user.name} · {t(`biz.role.${session.user.role}`)}
             </span>
+            {profile?.plan && (
+              <Link className="planBadge" to="/app/billing">
+                {profile.plan.name}
+                {profile.plan.source !== "SUBSCRIPTION" &&
+                  profile.plan.source !== "DEFAULT" &&
+                  ` · ${t(`billing.source.${profile.plan.source}`)}`}
+              </Link>
+            )}
           </div>
           {items
             .filter((x) => x[3])

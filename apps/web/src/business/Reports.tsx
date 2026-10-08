@@ -8,6 +8,7 @@ import {
   ClipboardCheck,
   Download,
   LineChart,
+  Lock,
   Printer,
   ShoppingBag,
   Store,
@@ -53,13 +54,18 @@ const ICONS: Record<string, typeof Wallet> = {
 
 export function ReportsIndex() {
   const { t } = useTranslation();
-  const [kinds, setKinds] = useState<string[] | null>(null);
+  const [kinds, setKinds] = useState<
+    { kind: string; locked: boolean }[] | null
+  >(null);
   const [error, setError] = useState("");
   useEffect(() => {
-    api<{ reports: { kind: string }[] }>("/api/v1/business/reports", {
-      auth: "business",
-    })
-      .then((r) => setKinds(r.reports.map((x) => x.kind)))
+    api<{ reports: { kind: string; locked: boolean }[] }>(
+      "/api/v1/business/reports",
+      {
+        auth: "business",
+      },
+    )
+      .then((r) => setKinds(r.reports))
       .catch((e) => setError(errorMessage(e)));
   }, []);
   return (
@@ -67,14 +73,24 @@ export function ReportsIndex() {
       <p className="dashSub">{t("ops.reports.intro")}</p>
       {error && <Notice>{error}</Notice>}
       <div className="reportCards">
-        {kinds?.map((k) => {
+        {kinds?.map(({ kind: k, locked }) => {
           const Icon = ICONS[k];
           return (
-            <Link key={k} to={`/app/reports/${k}`} className="reportCard">
+            <Link
+              key={k}
+              to={locked ? "/app/billing" : `/app/reports/${k}`}
+              className={`reportCard ${locked ? "locked" : ""}`}
+            >
               <Icon aria-hidden />
               <b>{t(`ops.reports.kind.${k}`)}</b>
               <p>{t(`ops.reports.about.${k}`)}</p>
-              <ArrowRight aria-hidden />
+              {locked ? (
+                <span className="lockTag">
+                  <Lock aria-hidden /> {t("billing.upgradeToUnlock")}
+                </span>
+              ) : (
+                <ArrowRight aria-hidden />
+              )}
             </Link>
           );
         })}

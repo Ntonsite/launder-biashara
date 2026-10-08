@@ -66,6 +66,11 @@ const Payments = lazy(() => customers().then((m) => ({ default: m.Payments })));
 const CustomerProfile = lazy(() =>
   customers().then((m) => ({ default: m.CustomerProfile })),
 );
+const billing = () => import("./business/Billing");
+const Billing = lazy(billing);
+const InvoicePage = lazy(() =>
+  billing().then((m) => ({ default: m.InvoicePage })),
+);
 const reports = () => import("./business/Reports");
 const ReportsIndex = lazy(() =>
   reports().then((m) => ({ default: m.ReportsIndex })),
@@ -424,6 +429,8 @@ export default function App() {
         <Route path="/app/marketplace" element={<MarketplaceBusiness />} />
         <Route path="/app/customers" element={<Customers />} />
         <Route path="/app/customers/:id" element={<CustomerProfile />} />
+        <Route path="/app/billing" element={<Billing />} />
+        <Route path="/app/billing/invoices/:id" element={<InvoicePage />} />
         <Route path="/app/reports" element={<ReportsIndex />} />
         <Route path="/app/reports/:kind" element={<ReportPage />} />
         <Route path="/app/payments" element={<Payments />} />

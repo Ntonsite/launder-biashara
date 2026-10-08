@@ -12,7 +12,7 @@ import {
 import { errorMessage } from "../lib/format";
 import { Lang } from "./shell";
 
-const ADMIN_ROLES = ["ADMIN", "SUPER_ADMIN"];
+const ADMIN_ROLES = ["ADMIN", "SUPER_ADMIN", "FINANCE_ADMIN"];
 const BUSINESS_ROLES = ["BUSINESS_OWNER", "BRANCH_MANAGER", "STAFF"];
 
 function AuthShell({ kind }: { kind: "login" | "register" | "admin" }) {
